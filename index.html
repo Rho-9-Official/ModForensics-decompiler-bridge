@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ModForensics v3.0 - Rho-9 Systems</title>
+<title>ModForensics v3.0.1 - Rho-9 Systems</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -450,7 +450,7 @@ textarea.deob-ta:focus{border-color:var(--cyan);}
     <div class="hdr-top-row">
       <img class="logo-img" alt="Rho-9">
       <div class="hdr-info">
-        <div class="hdr-title">ModForensics v3.0</div>
+        <div class="hdr-title">ModForensics v3.0.1</div>
         <div class="hdr-sub">Minecraft Mod Malware Forensics &mdash; Rho-9 Systems</div>
       </div>
     </div>
@@ -502,13 +502,14 @@ textarea.deob-ta:focus{border-color:var(--cyan);}
     <div class="content-area">
       <div id="welcomeScreen">
         <img class="logo-img" alt="">
-        <div class="welcome-title">ModForensics v3.0</div>
+        <div class="welcome-title">ModForensics v3.0.1</div>
         <div class="welcome-sub">Load a <strong>.zip</strong> (decompiled jar from decompiler.com), <strong>.litemod</strong>, <strong>.mrpack</strong>, or <strong>.class</strong> file.<br>
         <strong>.jar</strong> works too if the local decompile bridge is running and connected (see the BRIDGE pill above) — otherwise decompile first at <a href="https://www.decompiler.com" target="_blank" style="color:var(--pink)">decompiler.com</a> and load the resulting .zip.<br><br>
         Full code viewer &middot; strings &middot; IOCs &middot; flagged files &middot; class refs &middot; mixin targets &middot; webhook kill.<br><br>
         <span style="color:var(--cyan);font-family:var(--sans);font-size:10px;letter-spacing:1px;">&#9670; NEW IN v2.6: Stargazers/Baikal &amp; WeedHack sigs &middot; Skidfuscator/JNIC detection &middot; Token-theft &amp; crypto-wallet IOCs &middot; Obfuscator heuristics &middot; Entropy flagging &middot; ROT-N brute &middot; Copy-to-clipboard</span><br>
         <span style="color:var(--green);font-family:var(--sans);font-size:10px;letter-spacing:1px;">&#9670; NEW IN v2.7: Aho-Corasick O(n) scanner &middot; Full 202-opcode JVM table &middot; tableswitch/lookupswitch &middot; LOKI-style weighted scoring &middot; RFC 4648 URL-safe base64 &middot; SourceFile/InnerClass attributes &middot; Entropy threshold 6.0</span><br>
-        <span style="color:var(--purple);font-family:var(--sans);font-size:10px;letter-spacing:1px;">&#9670; NEW IN v3.0: Local Decompile Bridge &middot; direct .jar support (static analysis only, no code execution) &middot; auto-installing CFR/Vineflower engine &middot; cross-platform (Windows/Linux/Termux) &middot; SQLite-blob job storage wiped on shutdown &middot; same-origin app serving</span></div>
+        <span style="color:var(--purple);font-family:var(--sans);font-size:10px;letter-spacing:1px;">&#9670; NEW IN v3.0: Local Decompile Bridge &middot; direct .jar support (static analysis only, no code execution) &middot; auto-installing CFR/Vineflower engine &middot; cross-platform (Windows/Linux/Termux) &middot; SQLite-blob job storage wiped on shutdown &middot; same-origin app serving</span><br>
+        <span style="color:var(--red);font-family:var(--sans);font-size:10px;letter-spacing:1px;">&#9670; FIXED IN v3.0.1 (2026-07-13): Mixin false positives &mdash; bare presence of @Overwrite/@Redirect no longer marks a mixin HIGH RISK on its own (both remain informational badges); danger now requires an actual dangerous method-name match. Was flagging routine gameplay mixins (e.g. toggle-sneak, HUD redirects) as high risk.</span></div>
       </div>
 
       <div id="mainUI">
@@ -2447,7 +2448,7 @@ function extractMixinsFromSource(text, path){
       hasOverwrite: hasOverwrite,
       hasRedirect: hasRedirect,
       dangerMethods: dangerMethods,
-      isDanger: hasOverwrite || hasRedirect || dangerMethods.length > 0
+      isDanger: dangerMethods.length > 0
     });
   }
   return results;
@@ -2703,7 +2704,7 @@ function downloadReport(){
       '<div class="hdr-top-row">'+
         '<img class="logo-img" src="'+LOGO_URI+'" alt="Rho-9" style="height:72px;flex-shrink:0;">'+
         '<div class="hdr-info">'+
-          '<div class="hdr-title">ModForensics v3.0</div>'+
+          '<div class="hdr-title">ModForensics v3.0.1</div>'+
           '<div class="hdr-sub">Minecraft Mod Malware Forensics &mdash; Rho-9 Systems</div>'+
         '</div>'+
       '</div>'+
