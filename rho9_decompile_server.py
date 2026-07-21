@@ -194,8 +194,13 @@ def find_java():
 
 
 def attempt_install_jvm():
-    """Best-effort JVM install. Never blocks on a password prompt; if it
-    can't install silently, it just tells you what to run yourself."""
+    """Best-effort JVM install. On Linux this WILL block waiting for your
+    sudo password if passwordless sudo isn't configured -- it runs sudo
+    interactively (no -n), inheriting this terminal's stdin/stdout/stderr,
+    so you'll see the normal apt/dnf/pacman prompt right here and can type
+    your password. If you're running this non-interactively (e.g. no
+    controlling terminal), sudo itself will fail fast rather than hang
+    forever, and we fall through to telling you the manual command."""
     system = platform.system()
     if is_termux():
         log("Termux detected. Attempting: pkg install -y openjdk-17")
@@ -207,31 +212,42 @@ def attempt_install_jvm():
 
     if system == "Linux":
         if shutil.which("apt-get"):
-            log("Attempting passwordless: sudo -n apt-get install -y default-jre-headless")
+            log("Installing default-jre-headless via apt-get -- you may be "
+                "prompted for your sudo password below.")
             try:
                 r = subprocess.run(
-                    ["sudo", "-n", "apt-get", "install", "-y", "default-jre-headless"],
-                    timeout=300, capture_output=True, text=True,
+                    ["sudo", "apt-get", "install", "-y", "default-jre-headless"],
+                    timeout=300,
                 )
                 if r.returncode != 0:
-                    log("No passwordless sudo (or apt failed). Run manually:\n"
-                        "    sudo apt-get install -y default-jre-headless")
+                    log("apt-get install failed (exit code %d). Run manually:\n"
+                        "    sudo apt-get install -y default-jre-headless" % r.returncode)
             except Exception as e:
                 log("apt-get attempt failed: %s" % e)
         elif shutil.which("dnf"):
-            log("Run manually if this doesn't auto-elevate: sudo dnf install -y java-17-openjdk")
+            log("Installing java-17-openjdk via dnf -- you may be prompted "
+                "for your sudo password below.")
             try:
-                subprocess.run(["sudo", "-n", "dnf", "install", "-y", "java-17-openjdk"],
-                                timeout=300, capture_output=True, text=True)
-            except Exception:
-                pass
+                r = subprocess.run(
+                    ["sudo", "dnf", "install", "-y", "java-17-openjdk"], timeout=300,
+                )
+                if r.returncode != 0:
+                    log("dnf install failed (exit code %d). Run manually:\n"
+                        "    sudo dnf install -y java-17-openjdk" % r.returncode)
+            except Exception as e:
+                log("dnf attempt failed: %s" % e)
         elif shutil.which("pacman"):
-            log("Run manually if this doesn't auto-elevate: sudo pacman -S --noconfirm jre-openjdk")
+            log("Installing jre-openjdk via pacman -- you may be prompted "
+                "for your sudo password below.")
             try:
-                subprocess.run(["sudo", "-n", "pacman", "-S", "--noconfirm", "jre-openjdk"],
-                                timeout=300, capture_output=True, text=True)
-            except Exception:
-                pass
+                r = subprocess.run(
+                    ["sudo", "pacman", "-S", "--noconfirm", "jre-openjdk"], timeout=300,
+                )
+                if r.returncode != 0:
+                    log("pacman install failed (exit code %d). Run manually:\n"
+                        "    sudo pacman -S --noconfirm jre-openjdk" % r.returncode)
+            except Exception as e:
+                log("pacman attempt failed: %s" % e)
         else:
             log("No known package manager found. Please install a JDK/JRE 17+ manually.")
         return
