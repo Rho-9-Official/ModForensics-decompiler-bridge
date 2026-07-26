@@ -89,6 +89,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 import zipfile
@@ -100,8 +101,17 @@ import zipfile
 # bridge as "not found" -- which is the safe failure mode.
 # --------------------------------------------------------------------------
 BRIDGE_PURPOSE = "rho9-modforensics-decompile-bridge-v1"
-SERVER_VERSION = "1.0.0"
+SERVER_VERSION = "1.1.0"
 DEFAULT_PORTS = [8991, 8992, 8993, 8994, 8995]
+
+# The threat-intel store is DELIBERATELY persistent and lives at a fixed path,
+# completely separate from the per-run jobs DB (which is a throwaway temp file
+# wiped on every shutdown). Nothing in the cleanup/wipe/purge paths ever touches
+# this file -- see IntelStore below and cleanup() at the bottom. That is the
+# whole point: attacker fingerprints (webhook/C2/staging IOCs, malware hashes,
+# observed attack methods, and how often each has recurred) must survive across
+# sessions so repeat infrastructure can be recognised over time.
+INTEL_DB_DEFAULT = os.path.join(os.path.expanduser("~"), ".rho9", "threat_intel.sqlite3")
 
 # Each engine entry: name, jar filename we store it as, candidate download
 # URLs (tried in order, first that produces a working jar wins), and the
@@ -535,7 +545,565 @@ class Store:
                     pass
 
 
+# ==========================================================================
+# Persistent threat-intel store -- parameterized everywhere, NEVER wiped.
+#
+# This is the deliberate counterpart to Store above. Store is a temp blob DB
+# that is DELETEd + VACUUMed + unlinked on every shutdown path. IntelStore is
+# the opposite: a durable knowledge base at a fixed on-disk path that survives
+# restarts and is intentionally exempt from cleanup(), /rho9/wipe and
+# STORE.purge(). It records, per unique indicator value:
+#   - the indicator itself (webhook / C2 / staging link / wallet / url / etc.)
+#   - times_seen: how many DISTINCT samples that exact value has appeared in
+#     (the attacker-identification counter -- re-analysing the same file never
+#     inflates it, because sightings are deduplicated per (indicator, sample))
+#   - first_seen / last_seen timestamps
+# and, per malware sample (keyed by SHA-256 of the uploaded bytes):
+#   - filename, triage score + band, signature families, derived attack methods
+#     (e.g. "Discord webhook exfiltration", "Telegram C2", "Remote code loading")
+#   - file/class counts and how many times it has been analysed
+# plus a sample<->indicator link table (so an indicator can be pivoted to every
+# sample it appeared in, and vice versa) and an append-only analyses log used
+# for trend charts.
+# ==========================================================================
+
+class IntelStore:
+    def __init__(self, db_path):
+        self.db_path = db_path
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.lock = threading.Lock()
+        with self.lock:
+            self.conn.execute("PRAGMA journal_mode=WAL")
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS samples ("
+                " sha256 TEXT PRIMARY KEY,"
+                " filename TEXT,"
+                " first_seen REAL NOT NULL,"
+                " last_seen REAL NOT NULL,"
+                " score INTEGER,"
+                " band TEXT,"
+                " families TEXT,"          # JSON array of signature families
+                " attack_methods TEXT,"    # JSON array of human-readable methods
+                " file_count INTEGER,"
+                " class_count INTEGER,"
+                " times_analyzed INTEGER NOT NULL DEFAULT 1"
+                ")"
+            )
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS iocs ("
+                " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                " type TEXT NOT NULL,"
+                " value TEXT NOT NULL,"
+                " first_seen REAL NOT NULL,"
+                " last_seen REAL NOT NULL,"
+                " times_seen INTEGER NOT NULL DEFAULT 0,"
+                " UNIQUE(type, value)"
+                ")"
+            )
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS sample_iocs ("
+                " sample_sha256 TEXT NOT NULL,"
+                " ioc_id INTEGER NOT NULL,"
+                " source TEXT,"
+                " decoded INTEGER DEFAULT 0,"
+                " ts REAL NOT NULL,"
+                " UNIQUE(sample_sha256, ioc_id)"
+                ")"
+            )
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS analyses ("
+                " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                " ts REAL NOT NULL,"
+                " sample_sha256 TEXT,"
+                " score INTEGER,"
+                " band TEXT,"
+                " ioc_count INTEGER"
+                ")"
+            )
+            self.conn.execute(
+                "CREATE TABLE IF NOT EXISTS webhook_meta ("
+                " value TEXT PRIMARY KEY,"        # the full webhook URL
+                " webhook_id TEXT,"
+                " name TEXT,"
+                " guild_id TEXT,"                 # persistent operator fingerprint
+                " channel_id TEXT,"
+                " avatar TEXT,"
+                " application_id TEXT,"
+                " first_seen REAL NOT NULL,"
+                " last_seen REAL NOT NULL"
+                ")"
+            )
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_si_ioc ON sample_iocs(ioc_id)")
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_si_sample ON sample_iocs(sample_sha256)")
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wm_guild ON webhook_meta(guild_id)")
+            self.conn.execute("CREATE INDEX IF NOT EXISTS idx_wm_channel ON webhook_meta(channel_id)")
+            self.conn.commit()
+
+    # ---- write path -------------------------------------------------------
+    def record(self, payload):
+        """Record one finished analysis: upsert the sample, upsert every IOC,
+        link them, and bump the per-IOC 'times_seen' counter only when a genuinely
+        new (indicator, sample) pairing is observed. Everything is parameterized."""
+        sample = payload.get("sample") or {}
+        iocs = payload.get("iocs") or []
+        sha = (sample.get("sha256") or "").strip()
+        if not sha:
+            raise ValueError("sample.sha256 is required")
+
+        now = time.time()
+        score = sample.get("score")
+        band = sample.get("band")
+        families = json.dumps(sample.get("families") or [])
+        methods = json.dumps(sample.get("attack_methods") or [])
+        filename = sample.get("filename") or "unknown"
+        file_count = int(sample.get("file_count") or 0)
+        class_count = int(sample.get("class_count") or 0)
+
+        new_iocs = 0
+        new_links = 0
+        with self.lock:
+            cur = self.conn.execute("SELECT sha256 FROM samples WHERE sha256=?", (sha,))
+            sample_new = cur.fetchone() is None
+            if sample_new:
+                self.conn.execute(
+                    "INSERT INTO samples (sha256, filename, first_seen, last_seen, score, band,"
+                    " families, attack_methods, file_count, class_count, times_analyzed)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+                    (sha, filename, now, now, score, band, families, methods,
+                     file_count, class_count),
+                )
+            else:
+                self.conn.execute(
+                    "UPDATE samples SET last_seen=?, score=?, band=?, families=?,"
+                    " attack_methods=?, file_count=?, class_count=?,"
+                    " times_analyzed=times_analyzed+1 WHERE sha256=?",
+                    (now, score, band, families, methods, file_count, class_count, sha),
+                )
+
+            for ioc in iocs:
+                t = (ioc.get("type") or "").strip()
+                v = (ioc.get("value") or "").strip()
+                if not t or not v:
+                    continue
+                src = ioc.get("source") or ""
+                dec = 1 if ioc.get("decoded") else 0
+
+                row = self.conn.execute(
+                    "SELECT id FROM iocs WHERE type=? AND value=?", (t, v)
+                ).fetchone()
+                if row:
+                    ioc_id = row[0]
+                    self.conn.execute(
+                        "UPDATE iocs SET last_seen=? WHERE id=?", (now, ioc_id)
+                    )
+                else:
+                    c = self.conn.execute(
+                        "INSERT INTO iocs (type, value, first_seen, last_seen, times_seen)"
+                        " VALUES (?, ?, ?, ?, 0)", (t, v, now, now)
+                    )
+                    ioc_id = c.lastrowid
+                    new_iocs += 1
+
+                link = self.conn.execute(
+                    "INSERT OR IGNORE INTO sample_iocs (sample_sha256, ioc_id, source, decoded, ts)"
+                    " VALUES (?, ?, ?, ?, ?)", (sha, ioc_id, src, dec, now)
+                )
+                if link.rowcount == 1:
+                    # First time THIS indicator has been tied to THIS sample:
+                    # that is a distinct sighting, so the counter climbs.
+                    self.conn.execute(
+                        "UPDATE iocs SET times_seen=times_seen+1, last_seen=? WHERE id=?",
+                        (now, ioc_id)
+                    )
+                    new_links += 1
+
+            self.conn.execute(
+                "INSERT INTO analyses (ts, sample_sha256, score, band, ioc_count)"
+                " VALUES (?, ?, ?, ?, ?)", (now, sha, score, band, len(iocs))
+            )
+
+            # Optional Discord webhook attribution: the client resolves each
+            # webhook's server/channel/name via the bridge and passes it here so
+            # the same operator can be recognised across different webhooks.
+            for wm in (payload.get("webhook_meta") or []):
+                val = (wm.get("value") or "").strip()
+                if not val:
+                    continue
+                seen_wm = self.conn.execute(
+                    "SELECT value FROM webhook_meta WHERE value=?", (val,)).fetchone()
+                if seen_wm:
+                    self.conn.execute(
+                        "UPDATE webhook_meta SET webhook_id=?, name=?, guild_id=?,"
+                        " channel_id=?, avatar=?, application_id=?, last_seen=? WHERE value=?",
+                        (wm.get("webhook_id"), wm.get("name"), wm.get("guild_id"),
+                         wm.get("channel_id"), wm.get("avatar"), wm.get("application_id"),
+                         now, val))
+                else:
+                    self.conn.execute(
+                        "INSERT INTO webhook_meta (value, webhook_id, name, guild_id,"
+                        " channel_id, avatar, application_id, first_seen, last_seen)"
+                        " VALUES (?,?,?,?,?,?,?,?,?)",
+                        (val, wm.get("webhook_id"), wm.get("name"), wm.get("guild_id"),
+                         wm.get("channel_id"), wm.get("avatar"), wm.get("application_id"),
+                         now, now))
+
+            self.conn.commit()
+
+        return {"ok": True, "sha256": sha, "sample_new": sample_new,
+                "new_iocs": new_iocs, "new_links": new_links,
+                "iocs_submitted": len(iocs)}
+
+    # ---- read path --------------------------------------------------------
+    def list_iocs(self, limit=2000, type_filter=None, q=None):
+        with self.lock:
+            sql = ("SELECT type, value, times_seen, first_seen, last_seen FROM iocs")
+            conds = []
+            params = []
+            if type_filter:
+                conds.append("type=?")
+                params.append(type_filter)
+            if q:
+                conds.append("value LIKE ?")
+                params.append("%" + q + "%")
+            if conds:
+                sql += " WHERE " + " AND ".join(conds)
+            sql += " ORDER BY times_seen DESC, last_seen DESC LIMIT ?"
+            params.append(int(limit))
+            rows = self.conn.execute(sql, params).fetchall()
+            total = self.conn.execute("SELECT COUNT(*) FROM iocs").fetchone()[0]
+        return {
+            "total": total,
+            "iocs": [
+                {"type": r[0], "value": r[1], "times_seen": r[2],
+                 "first_seen": r[3], "last_seen": r[4]} for r in rows
+            ],
+        }
+
+    def ioc_detail(self, type_, value):
+        with self.lock:
+            row = self.conn.execute(
+                "SELECT id, type, value, first_seen, last_seen, times_seen"
+                " FROM iocs WHERE type=? AND value=?", (type_, value)
+            ).fetchone()
+            if not row:
+                return None
+            ioc_id = row[0]
+            samples = self.conn.execute(
+                "SELECT s.sha256, s.filename, s.score, s.band, s.attack_methods,"
+                " s.families, si.source, si.decoded, si.ts"
+                " FROM sample_iocs si JOIN samples s ON s.sha256 = si.sample_sha256"
+                " WHERE si.ioc_id=? ORDER BY si.ts DESC", (ioc_id,)
+            ).fetchall()
+            cooc = self.conn.execute(
+                "SELECT i.type, i.value, i.times_seen, COUNT(*) AS shared"
+                " FROM sample_iocs a"
+                " JOIN sample_iocs b ON a.sample_sha256 = b.sample_sha256 AND b.ioc_id <> a.ioc_id"
+                " JOIN iocs i ON i.id = b.ioc_id"
+                " WHERE a.ioc_id=? GROUP BY i.id"
+                " ORDER BY shared DESC, i.times_seen DESC LIMIT 50", (ioc_id,)
+            ).fetchall()
+            # Discord attribution enrichment
+            webhook_meta = None
+            related_webhooks = []
+            if row[1] == "webhook":
+                wm = self.conn.execute(
+                    "SELECT webhook_id, name, guild_id, channel_id, avatar,"
+                    " application_id, first_seen, last_seen FROM webhook_meta WHERE value=?",
+                    (row[2],)).fetchone()
+                if wm:
+                    webhook_meta = {"webhook_id": wm[0], "name": wm[1], "guild_id": wm[2],
+                                    "channel_id": wm[3], "avatar": wm[4], "application_id": wm[5],
+                                    "first_seen": wm[6], "last_seen": wm[7]}
+                    if wm[2]:
+                        sib = self.conn.execute(
+                            "SELECT value, name FROM webhook_meta WHERE guild_id=? AND value<>?",
+                            (wm[2], row[2])).fetchall()
+                        related_webhooks = [{"value": s[0], "name": s[1]} for s in sib]
+            elif row[1] in ("discord_guild", "discord_channel"):
+                col = "guild_id" if row[1] == "discord_guild" else "channel_id"
+                wl = self.conn.execute(
+                    "SELECT value, name, guild_id, channel_id FROM webhook_meta WHERE %s=?" % col,
+                    (row[2],)).fetchall()
+                related_webhooks = [{"value": w[0], "name": w[1], "guild_id": w[2],
+                                     "channel_id": w[3]} for w in wl]
+        return {
+            "ioc": {"type": row[1], "value": row[2], "first_seen": row[3],
+                    "last_seen": row[4], "times_seen": row[5]},
+            "webhook_meta": webhook_meta,
+            "related_webhooks": related_webhooks,
+            "samples": [
+                {"sha256": s[0], "filename": s[1], "score": s[2], "band": s[3],
+                 "attack_methods": _load_json_list(s[4]), "families": _load_json_list(s[5]),
+                 "source": s[6], "decoded": bool(s[7]), "ts": s[8]} for s in samples
+            ],
+            "cooccurring": [
+                {"type": c[0], "value": c[1], "times_seen": c[2], "shared_samples": c[3]}
+                for c in cooc
+            ],
+        }
+
+    def list_samples(self, limit=1000):
+        with self.lock:
+            rows = self.conn.execute(
+                "SELECT sha256, filename, score, band, attack_methods, families,"
+                " first_seen, last_seen, times_analyzed FROM samples"
+                " ORDER BY last_seen DESC LIMIT ?", (int(limit),)
+            ).fetchall()
+        return {"samples": [
+            {"sha256": r[0], "filename": r[1], "score": r[2], "band": r[3],
+             "attack_methods": _load_json_list(r[4]), "families": _load_json_list(r[5]),
+             "first_seen": r[6], "last_seen": r[7], "times_analyzed": r[8]} for r in rows
+        ]}
+
+    def trends(self):
+        with self.lock:
+            totals = {
+                "samples": self.conn.execute("SELECT COUNT(*) FROM samples").fetchone()[0],
+                "iocs": self.conn.execute("SELECT COUNT(*) FROM iocs").fetchone()[0],
+                "analyses": self.conn.execute("SELECT COUNT(*) FROM analyses").fetchone()[0],
+            }
+            by_day = self.conn.execute(
+                "SELECT strftime('%Y-%m-%d', ts, 'unixepoch') AS day, COUNT(*)"
+                " FROM analyses GROUP BY day ORDER BY day"
+            ).fetchall()
+            by_type = self.conn.execute(
+                "SELECT type, COUNT(*) FROM iocs GROUP BY type ORDER BY COUNT(*) DESC"
+            ).fetchall()
+            bands = self.conn.execute(
+                "SELECT band, COUNT(*) FROM samples GROUP BY band"
+            ).fetchall()
+            top = self.conn.execute(
+                "SELECT type, value, times_seen FROM iocs"
+                " ORDER BY times_seen DESC, last_seen DESC LIMIT 15"
+            ).fetchall()
+            method_rows = self.conn.execute(
+                "SELECT attack_methods FROM samples"
+            ).fetchall()
+        method_counts = {}
+        for (mj,) in method_rows:
+            for m in _load_json_list(mj):
+                method_counts[m] = method_counts.get(m, 0) + 1
+        methods = sorted(
+            ({"method": k, "count": v} for k, v in method_counts.items()),
+            key=lambda x: x["count"], reverse=True
+        )
+        return {
+            "totals": totals,
+            "analyses_by_day": [{"day": d[0], "count": d[1]} for d in by_day],
+            "iocs_by_type": [{"type": t[0], "count": t[1]} for t in by_type],
+            "bands": [{"band": b[0], "count": b[1]} for b in bands],
+            "top_iocs": [{"type": t[0], "value": t[1], "times_seen": t[2]} for t in top],
+            "methods": methods,
+        }
+
+    def close(self):
+        """Commit and close the connection WITHOUT deleting anything. This is a
+        persistent store, so shutdown means 'flush and let go', never 'erase'."""
+        with self.lock:
+            try:
+                self.conn.commit()
+                self.conn.close()
+            except Exception as e:
+                log("Warning: error closing intel DB: %s" % e)
+
+
+def _load_json_list(s):
+    if not s:
+        return []
+    try:
+        v = json.loads(s)
+        return v if isinstance(v, list) else []
+    except Exception:
+        return []
+
+
+# ==========================================================================
+# Discord / OSINT helpers -- webhook attribution, CDN ingestion, abuse reports.
+# Every outbound request here is tightly constrained: the webhook and CDN
+# helpers only ever talk to Discord hostnames, redirect targets are re-validated
+# against the same allowlist (no open-redirect / SSRF pivot), response sizes are
+# capped, and filenames are sanitised before anything is returned to the browser.
+# ==========================================================================
+
+DISCORD_WEBHOOK_RE = re.compile(
+    r"^https://(?:canary\.|ptb\.)?discord(?:app)?\.com/api(?:/v\d+)?/webhooks/(\d+)/([A-Za-z0-9_.-]+)$"
+)
+DISCORD_API_HOSTS = ("discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com")
+DISCORD_CDN_HOSTS = ("cdn.discordapp.com", "media.discordapp.net", "cdn.discordapp.net")
+DISCORD_CDN_EXTS = (".zip", ".jar", ".litemod", ".mrpack", ".class")
+_SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
+_IPV4_RE = re.compile(r"^(?:\d{1,3}\.){3}\d{1,3}$")
+_DOMAIN_RE = re.compile(
+    r"^(?=.{1,253}$)(?:[A-Za-z0-9_](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$"
+)
+
+
+def _sanitize_filename(name, fallback="discord_download.bin"):
+    name = (name or "").split("/")[-1].split("\\")[-1].strip()
+    name = _SAFE_NAME_RE.sub("_", name)
+    name = name.strip("._") or fallback
+    return name[:120]
+
+
+def _constrained_get(url, timeout=8, max_bytes=None, allowed_hosts=None):
+    """HTTP GET with a host allowlist enforced on the initial URL AND on every
+    redirect hop (blocks open-redirect / SSRF pivots), plus a hard size cap.
+    Returns (status, headers_dict, body_bytes)."""
+    host = urllib.parse.urlparse(url).hostname or ""
+    if allowed_hosts is not None and host not in allowed_hosts:
+        raise ValueError("host not allowed: %s" % (host or "(none)"))
+
+    class _Restricted(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, hdrs, newurl):
+            nh = urllib.parse.urlparse(newurl).hostname or ""
+            if allowed_hosts is not None and nh not in allowed_hosts:
+                raise urllib.error.HTTPError(
+                    newurl, code, "redirect to disallowed host %s" % nh, hdrs, fp)
+            return super().redirect_request(req, fp, code, msg, hdrs, newurl)
+
+    opener = urllib.request.build_opener(_Restricted)
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Rho9-ModForensics/%s (+https://modforensics.rho-9.com)" % SERVER_VERSION,
+        "Accept": "*/*",
+    })
+    try:
+        resp = opener.open(req, timeout=timeout)
+    except urllib.error.HTTPError as e:
+        # Read the (bounded) error body so callers can inspect 404/401 payloads.
+        body = e.read(max_bytes + 1 if max_bytes else 65536)
+        return e.code, dict(e.headers.items() if e.headers else {}), body
+    with resp:
+        status = getattr(resp, "status", 200)
+        headers = dict(resp.headers.items())
+        if max_bytes:
+            body = resp.read(max_bytes + 1)
+            if len(body) > max_bytes:
+                raise ValueError("response exceeds size cap (%d bytes)" % max_bytes)
+        else:
+            body = resp.read()
+    return status, headers, body
+
+
+def fetch_webhook_info(url, timeout=8):
+    """GET a Discord webhook by URL+token. Discord does NOT return the creating
+    user object for token-authenticated reads, so 'who created it' is captured by
+    the stable guild_id / channel_id / name fields -- these persist across every
+    webhook an operator makes in that server, which is exactly the cross-sample
+    attribution signal we want."""
+    m = DISCORD_WEBHOOK_RE.match(url or "")
+    if not m:
+        return {"ok": False, "error": "not a recognised Discord webhook URL"}
+    try:
+        status, _, body = _constrained_get(url, timeout=timeout, max_bytes=64 * 1024,
+                                           allowed_hosts=DISCORD_API_HOSTS)
+    except Exception as e:
+        return {"ok": False, "error": "fetch failed: %s" % e, "webhook_id": m.group(1)}
+    try:
+        d = json.loads(body.decode("utf-8", "replace"))
+    except Exception:
+        return {"ok": False, "status": status, "error": "non-JSON response from Discord",
+                "webhook_id": m.group(1)}
+    alive = status == 200 and isinstance(d, dict) and "id" in d
+    return {
+        "ok": True, "status": status, "alive": alive,
+        "value": url,
+        "webhook_id": (d.get("id") if isinstance(d, dict) else None) or m.group(1),
+        "name": d.get("name") if isinstance(d, dict) else None,
+        "channel_id": d.get("channel_id") if isinstance(d, dict) else None,
+        "guild_id": d.get("guild_id") if isinstance(d, dict) else None,
+        "type": d.get("type") if isinstance(d, dict) else None,
+        "avatar": d.get("avatar") if isinstance(d, dict) else None,
+        "application_id": d.get("application_id") if isinstance(d, dict) else None,
+        "note": ("Discord does not expose the creator user via a webhook token; "
+                 "guild_id / channel_id / name are the persistent operator fingerprints "
+                 "and are logged so the same server links across multiple webhooks."),
+    }
+
+
+def fetch_discord_cdn(url, timeout=25, max_bytes=None):
+    """Download a Minecraft archive from a Discord CDN host ONLY. Strict https +
+    host allowlist + extension allowlist + size cap + redirect-host validation +
+    sanitised filename. Returns (safe_filename, body_bytes)."""
+    if max_bytes is None:
+        max_bytes = MAX_UPLOAD_BYTES
+    p = urllib.parse.urlparse(url or "")
+    if p.scheme != "https" or (p.hostname or "") not in DISCORD_CDN_HOSTS:
+        raise ValueError("URL must be an https Discord CDN link (%s)" % ", ".join(DISCORD_CDN_HOSTS))
+    lower = (p.path or "").lower()
+    if not any(lower.endswith(ext) for ext in DISCORD_CDN_EXTS):
+        raise ValueError("filename must end in one of: %s" % ", ".join(DISCORD_CDN_EXTS))
+    status, _, body = _constrained_get(url, timeout=timeout, max_bytes=max_bytes,
+                                       allowed_hosts=DISCORD_CDN_HOSTS)
+    if status != 200:
+        raise ValueError("Discord CDN returned HTTP %s" % status)
+    name = _sanitize_filename((p.path or "").split("/")[-1])
+    if not any(name.lower().endswith(ext) for ext in DISCORD_CDN_EXTS):
+        raise ValueError("sanitised filename lost its expected extension")
+    return name, body
+
+
+def _vcard_emails(entity):
+    out = []
+    va = entity.get("vcardArray") if isinstance(entity, dict) else None
+    if isinstance(va, list) and len(va) == 2 and isinstance(va[1], list):
+        for field in va[1]:
+            if isinstance(field, list) and len(field) >= 4 and field[0] == "email" \
+                    and isinstance(field[3], str):
+                out.append(field[3])
+    return out
+
+
+def _vcard_fn(entity):
+    va = entity.get("vcardArray") if isinstance(entity, dict) else None
+    if isinstance(va, list) and len(va) == 2 and isinstance(va[1], list):
+        for field in va[1]:
+            if isinstance(field, list) and len(field) >= 4 and field[0] == "fn" \
+                    and isinstance(field[3], str):
+                return field[3]
+    return None
+
+
+def fetch_abuse_contact(target, timeout=10):
+    """Best-effort RDAP lookup to surface abuse-contact emails for an IP or
+    domain, so filing a hosting/registrar report is easy. Degrades gracefully
+    when RDAP is unreachable."""
+    target = (target or "").strip().lower()
+    if _IPV4_RE.match(target):
+        url, kind = "https://rdap.org/ip/%s" % target, "ip"
+    elif _DOMAIN_RE.match(target):
+        url, kind = "https://rdap.org/domain/%s" % target, "domain"
+    else:
+        return {"ok": False, "error": "target must be an IPv4 address or a domain"}
+    try:
+        status, _, body = _constrained_get(url, timeout=timeout, max_bytes=512 * 1024)
+        d = json.loads(body.decode("utf-8", "replace"))
+    except Exception as e:
+        return {"ok": False, "error": "RDAP lookup failed: %s" % e, "target": target, "kind": kind}
+    emails, org = [], None
+
+    def walk(entities):
+        for ent in entities or []:
+            if isinstance(ent, dict):
+                if "abuse" in (ent.get("roles") or []):
+                    emails.extend(_vcard_emails(ent))
+                walk(ent.get("entities"))
+    walk(d.get("entities") if isinstance(d, dict) else [])
+    for ent in (d.get("entities") if isinstance(d, dict) else []) or []:
+        roles = ent.get("roles") or [] if isinstance(ent, dict) else []
+        if "registrar" in roles or "registrant" in roles:
+            org = _vcard_fn(ent) or org
+    seen, uniq = set(), []
+    for e in emails:
+        if e not in seen:
+            seen.add(e); uniq.append(e)
+    return {"ok": True, "target": target, "kind": kind, "abuse_emails": uniq,
+            "organization": org,
+            "rdap_name": (d.get("name") or d.get("ldhName") or d.get("handle")) if isinstance(d, dict) else None}
+
+
 STORE = None  # set in main()
+INTEL = None  # persistent threat-intel store, set in main() -- exempt from all wipes
 STATIC_DIR = None  # set in main() -- the "ModForensics" folder holding index.html
 
 
@@ -708,6 +1276,7 @@ def run_decompile(input_bytes, original_filename, timeout_seconds):
 
 MAX_UPLOAD_BYTES = 150 * 1024 * 1024
 MAX_SESSION_BYTES = 250 * 1024 * 1024
+MAX_INTEL_BYTES = 16 * 1024 * 1024   # intel POSTs are just IOC/metadata JSON, never file bytes
 DECOMPILE_TIMEOUT = 90
 
 
@@ -728,6 +1297,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers",
                           "Content-Type, X-Filename, X-Rho9-Purpose")
+        self.send_header("Access-Control-Expose-Headers", "X-Filename")
         self.send_header("Access-Control-Max-Age", "600")
         # Private Network Access: Chrome (and increasingly other browsers)
         # require an explicit opt-in before a page can reach a loopback/
@@ -821,8 +1391,42 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     "ready": _state["ready"],
                     "setup_message": _state["setup_message"],
                     "max_upload_mb": MAX_UPLOAD_BYTES // (1024 * 1024),
+                    "intel": INTEL is not None,
+                    "webhook_info": True,
+                    "discord_fetch": True,
+                    "abuse_contact": True,
                 }
             self._send_json(caps)
+            return
+
+        if self.path.startswith("/rho9/intel/"):
+            self._handle_intel_get()
+            return
+
+        if self.path.startswith("/rho9/webhook-info"):
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            self._send_json(fetch_webhook_info((q.get("url") or [""])[0]))
+            return
+
+        if self.path.startswith("/rho9/fetch-discord"):
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            try:
+                name, data = fetch_discord_cdn((q.get("url") or [""])[0])
+            except Exception as e:
+                self._send_json({"error": str(e)}, status=400)
+                return
+            self.send_response(200)
+            self._cors()
+            self.send_header("Content-Type", "application/octet-stream")
+            self.send_header("X-Filename", urllib.parse.quote(name))
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
+        if self.path.startswith("/rho9/abuse-contact"):
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            self._send_json(fetch_abuse_contact((q.get("target") or [""])[0]))
             return
 
         if self.path == "/rho9/jobs":
@@ -870,9 +1474,89 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         self._send_json({"error": "not found"}, status=404)
 
+    # ---- threat-intel endpoints -------------------------------------------
+    def _handle_intel_get(self):
+        if INTEL is None:
+            self._send_json({"error": "intel store disabled (--no-intel)"}, status=404)
+            return
+        parsed = urllib.parse.urlparse(self.path)
+        route = parsed.path
+        params = urllib.parse.parse_qs(parsed.query)
+
+        def one(name, default=None):
+            v = params.get(name)
+            return v[0] if v else default
+
+        try:
+            if route == "/rho9/intel/iocs":
+                limit = int(one("limit", "2000") or "2000")
+                limit = max(1, min(limit, 10000))
+                self._send_json(INTEL.list_iocs(
+                    limit=limit, type_filter=one("type"), q=one("q")))
+                return
+            if route == "/rho9/intel/ioc":
+                t = one("type")
+                v = one("value")
+                if not t or not v:
+                    self._send_json({"error": "type and value are required"}, status=400)
+                    return
+                detail = INTEL.ioc_detail(t, v)
+                if detail is None:
+                    self._send_json({"error": "unknown indicator"}, status=404)
+                    return
+                self._send_json(detail)
+                return
+            if route == "/rho9/intel/samples":
+                limit = int(one("limit", "1000") or "1000")
+                limit = max(1, min(limit, 10000))
+                self._send_json(INTEL.list_samples(limit=limit))
+                return
+            if route == "/rho9/intel/trends":
+                self._send_json(INTEL.trends())
+                return
+        except Exception as e:
+            self._send_json({"error": "intel query failed: %s" % e}, status=500)
+            return
+
+        self._send_json({"error": "not found"}, status=404)
+
+    def _handle_intel_record(self):
+        if INTEL is None:
+            self._send_json({"error": "intel store disabled (--no-intel)"}, status=404)
+            return
+        purpose = self.headers.get("X-Rho9-Purpose", "")
+        if purpose != BRIDGE_PURPOSE:
+            self._send_json({"error": "purpose header mismatch"}, status=400)
+            return
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if length <= 0:
+            self._send_json({"error": "empty body"}, status=400)
+            return
+        if length > MAX_INTEL_BYTES:
+            self._send_json({"error": "intel payload too large"}, status=413)
+            return
+        data = self.rfile.read(length)
+        try:
+            payload = json.loads(data.decode("utf-8"))
+        except Exception:
+            self._send_json({"error": "body is not valid JSON"}, status=400)
+            return
+        try:
+            result = INTEL.record(payload)
+        except ValueError as e:
+            self._send_json({"error": str(e)}, status=400)
+            return
+        except Exception as e:
+            self._send_json({"error": "intel record failed: %s" % e}, status=500)
+            return
+        self._send_json(result)
+
     def do_POST(self):
         if self.path == "/rho9/decompile":
             self._handle_decompile()
+            return
+        if self.path == "/rho9/intel":
+            self._handle_intel_record()
             return
         if self.path == "/rho9/session":
             self._handle_save_session()
@@ -989,6 +1673,11 @@ def cleanup():
     if STORE:
         STORE.wipe()
     log("Wipe complete.")
+    # The persistent threat-intel DB is intentionally NOT wiped -- it is the one
+    # store that must outlive the process. Just flush and close its connection.
+    if INTEL:
+        INTEL.close()
+        log("Threat-intel DB flushed and left in place at %s" % INTEL.db_path)
 
 
 def bind_server(host, ports):
@@ -1002,7 +1691,7 @@ def bind_server(host, ports):
 
 
 def main():
-    global DECOMPILE_TIMEOUT, MAX_UPLOAD_BYTES, MAX_SESSION_BYTES, STORE, _httpd, STATIC_DIR
+    global DECOMPILE_TIMEOUT, MAX_UPLOAD_BYTES, MAX_SESSION_BYTES, STORE, INTEL, _httpd, STATIC_DIR
     parser = argparse.ArgumentParser(description="Rho-9 ModForensics local decompile bridge")
     parser.add_argument("--port-start", type=int, default=DEFAULT_PORTS[0])
     parser.add_argument("--tools-dir", default=os.path.join(
@@ -1012,6 +1701,14 @@ def main():
     parser.add_argument("--timeout", type=int, default=DECOMPILE_TIMEOUT)
     parser.add_argument("--max-upload-mb", type=int, default=150)
     parser.add_argument("--max-session-mb", type=int, default=250)
+    parser.add_argument("--intel-db", default=INTEL_DB_DEFAULT,
+                         help="path to the persistent threat-intel SQLite DB. This "
+                              "file is NEVER wiped on shutdown or by /rho9/wipe -- it "
+                              "is the long-lived attacker-fingerprint knowledge base. "
+                              "Default: " + INTEL_DB_DEFAULT)
+    parser.add_argument("--no-intel", action="store_true",
+                         help="disable the persistent threat-intel store entirely "
+                              "(no logging, /rho9/intel* endpoints return 404).")
     parser.add_argument("--no-page", action="store_true",
                          help="API only -- skip creating/serving the ModForensics static "
                               "folder entirely. Use this when the UI is hosted elsewhere "
@@ -1029,6 +1726,18 @@ def main():
     log("Binding to loopback only (%s) -- never reachable off this machine." % host)
 
     STORE = Store()
+    if args.no_intel:
+        INTEL = None
+        log("--no-intel: persistent threat-intel store disabled.")
+    else:
+        try:
+            INTEL = IntelStore(args.intel_db)
+            log("Threat-intel store ready (persistent, exempt from cleanup): %s"
+                % args.intel_db)
+        except Exception as e:
+            INTEL = None
+            log("Could not open threat-intel store at %s: %s -- continuing without it."
+                % (args.intel_db, e))
     if args.no_page:
         STATIC_DIR = None
         log("--no-page: API only, static file hosting disabled (no ModForensics "
