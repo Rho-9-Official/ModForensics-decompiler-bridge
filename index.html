@@ -381,6 +381,7 @@ body.menu-open .vertical-overlay{display:block;}
 .ioc-payload_url{background:rgba(255,77,109,.15);color:var(--red);}
 .ioc-geoip_url{background:rgba(247,185,85,.15);color:var(--amber);}
 .ioc-telegram_api,.ioc-telegram_token{background:rgba(41,156,219,.16);color:#5cb8ec;}
+.ioc-discord_guild,.ioc-discord_channel{background:rgba(167,139,250,.13);color:var(--purple);}
 .ioc-crypto_wallet{background:rgba(247,147,26,.16);color:#f2a13c;}
 .ioc-full-row{padding:13px 16px;border-bottom:1px solid var(--bd);min-width:0;}
 .ioc-full-row:hover{background:var(--card-2);}
@@ -792,6 +793,84 @@ textarea.deob-ta:focus{border-color:var(--brand);}
   .main-content{margin-left:0;padding-top:0;}
   .card{box-shadow:none;break-inside:avoid;}
 }
+/* ---- Threat Intel (persistent DB views) ---- */
+.intel-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.intel-note{font-size:11px;color:var(--text2);line-height:1.7;}
+.intel-tot{font-size:11px;color:var(--text2);margin-left:auto;font-family:var(--mono);}
+.intel-seen{font-family:var(--mono);font-weight:600;text-align:right;}
+.intel-seen.hot{color:var(--red);}
+.intel-seen.warm{color:var(--amber);}
+.ioc-tr.intel-row{cursor:pointer;}
+.ioc-tr.intel-row:hover td{background:rgba(34,201,232,.06);}
+.intel-back{background:none;border:1px solid var(--bd);color:var(--text2);border-radius:8px;
+  padding:5px 12px;font-size:11px;cursor:pointer;margin-bottom:12px;font-family:var(--sans);}
+.intel-back:hover{border-color:var(--brand);color:#fff;}
+.attacker-hd{font-family:var(--mono);font-size:12.5px;word-break:break-all;color:var(--purple);line-height:1.6;}
+.attacker-meta{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 4px;font-size:11.5px;color:var(--text2);}
+.attacker-meta b{color:var(--text);font-family:var(--mono);}
+.chip{display:inline-block;font-size:10px;padding:2px 9px;border-radius:20px;background:var(--card-3);
+  color:var(--text2);margin:2px 5px 2px 0;}
+.chip.method{background:rgba(255,77,109,.13);color:var(--red);}
+.chip.fam{background:rgba(34,201,232,.13);color:var(--brand);}
+.sect-lbl{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);
+  margin:16px 0 8px;}
+.mini-bar-row{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:11.5px;}
+.mini-bar-label{flex:0 0 42%;overflow-wrap:anywhere;color:var(--text2);}
+.mini-bar-label.mono{font-family:var(--mono);font-size:10.5px;}
+.mini-bar-track{flex:1;height:14px;background:var(--card-3);border-radius:7px;overflow:hidden;min-width:40px;}
+.mini-bar-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--accent));border-radius:7px;min-width:2px;}
+.mini-bar-fill.red{background:linear-gradient(90deg,var(--amber),var(--red));}
+.mini-bar-val{flex:0 0 auto;font-family:var(--mono);font-weight:600;color:var(--text);min-width:26px;text-align:right;}
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:6px;}
+.spark-wrap{width:100%;overflow-x:auto;padding-top:4px;}
+.spark-wrap svg{display:block;}
+/* ---- Discord CDN fetch row ---- */
+.discord-fetch{display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--card);
+  border:1px solid var(--bd);border-radius:var(--radius);padding:8px 10px;min-width:0;}
+.df-icon{color:var(--purple);flex-shrink:0;display:flex;font-size:16px;}
+.df-input{flex:1;min-width:0;background:var(--card-2);border:1px solid var(--bd);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:11.5px;padding:8px 10px;}
+.df-input::placeholder{color:var(--text3);}
+.df-input:focus{border-color:var(--brand);outline:none;}
+.df-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;background:rgba(167,139,250,.14);
+  border:1px solid rgba(167,139,250,.35);color:var(--purple);border-radius:8px;padding:8px 14px;
+  font-family:var(--sans);font-size:11.5px;font-weight:600;cursor:pointer;}
+.df-btn:hover{background:rgba(167,139,250,.24);}
+.df-btn .ri-ic{width:14px;height:14px;}
+/* ---- Report builder ---- */
+.rb-block{margin:14px 0;}
+.rb-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.rb-title{font-size:12px;font-weight:600;color:var(--text);}
+.rb-ta{width:100%;box-sizing:border-box;min-height:150px;resize:vertical;background:var(--card-2);
+  border:1px solid var(--bd);border-radius:8px;color:var(--text);font-family:var(--mono);
+  font-size:11px;line-height:1.6;padding:10px;}
+.rb-ta:focus{border-color:var(--brand);outline:none;}
+.rb-links{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px;}
+.rb-link{font-size:11px;color:var(--brand);text-decoration:none;}
+.rb-link:hover{text-decoration:underline;}
+.rb-rdap-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+/* ---- Sparse Rho-9 shop ad ---- */
+.rho9-ad{position:fixed;right:16px;bottom:16px;z-index:900;width:290px;max-width:calc(100vw - 32px);
+  background:var(--card);border:1px solid var(--bd);border-left:3px solid var(--purple);
+  border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.45);padding:14px 14px 12px;
+  font-family:var(--sans);opacity:0;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease;}
+.rho9-ad.show{opacity:1;transform:translateY(0);}
+.rho9-ad-x{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text3);
+  font-size:14px;cursor:pointer;line-height:1;padding:2px 5px;border-radius:6px;}
+.rho9-ad-x:hover{color:var(--text);background:var(--card-3);}
+.rho9-ad-kicker{font-size:9.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--purple);}
+.rho9-ad-name{font-size:14px;font-weight:600;color:var(--text);margin:5px 0;padding-right:16px;}
+.rho9-ad-pitch{font-size:11.5px;line-height:1.6;color:var(--text2);}
+.rho9-ad-actions{display:flex;align-items:center;gap:12px;margin-top:11px;}
+.rho9-ad-btn{background:rgba(167,139,250,.16);border:1px solid rgba(167,139,250,.35);color:var(--purple);
+  text-decoration:none;font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:8px;}
+.rho9-ad-btn:hover{background:rgba(167,139,250,.28);}
+.rho9-ad-link{font-size:11px;color:var(--text2);text-decoration:none;}
+.rho9-ad-link:hover{color:var(--brand);text-decoration:underline;}
+.rho9-ad-never{display:block;margin-top:9px;background:none;border:none;color:var(--text3);
+  font-size:10px;cursor:pointer;padding:0;text-decoration:underline;font-family:var(--sans);}
+.rho9-ad-never:hover{color:var(--text2);}
+@media print{ .rho9-ad{display:none!important;} }
 </style>
 </head>
 <body>
@@ -844,8 +923,13 @@ textarea.deob-ta:focus{border-color:var(--brand);}
       <button class="tab-btn" id="tb-webhooks"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-links-line"></use></svg></span><span class="tab-lbl">Webhooks</span><span class="badge">0</span></button>
       <button class="tab-btn" id="tb-mixins"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-git-merge-line"></use></svg></span><span class="tab-lbl">Mixins</span><span class="badge">0</span></button>
 
+      <div class="menu-title">Threat Intel</div>
+      <button class="tab-btn" id="tb-intel"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-fingerprint-line"></use></svg></span><span class="tab-lbl">Intel DB</span><span class="badge">0</span></button>
+      <button class="tab-btn" id="tb-trends"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-bar-chart-box-line"></use></svg></span><span class="tab-lbl">Trends</span><span class="badge"></span></button>
+
       <div class="menu-title">Tools</div>
       <button class="tab-btn" id="tb-deob"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-key-2-line"></use></svg></span><span class="tab-lbl">Deobfuscator</span><span class="badge"></span></button>
+      <button class="tab-btn" id="btn-reportbuilder" onclick="showReportBuilder()"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-send-plane-line"></use></svg></span><span class="tab-lbl">Report builder</span><span class="badge"></span></button>
       <button class="tab-btn" id="tb-report"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-download-2-line"></use></svg></span><span class="tab-lbl">Export report</span><span class="badge"></span></button>
     </nav>
   </div>
@@ -880,6 +964,14 @@ textarea.deob-ta:focus{border-color:var(--brand);}
         </label>
       </div>
 
+      <div class="discord-fetch" id="discordFetchRow">
+        <span class="df-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-links-line"></use></svg></span>
+        <input id="discordUrl" class="df-input" type="text" spellcheck="false" autocomplete="off"
+          placeholder="Paste a Discord CDN link (cdn.discordapp.com/.../file.zip) to fetch via the bridge"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();fetchFromDiscord();}">
+        <button class="df-btn" onclick="fetchFromDiscord()"><svg class="ri-ic" aria-hidden="true"><use href="#ri-download-2-line"></use></svg> Fetch</button>
+      </div>
+
       <div class="file-queue" id="fileQueue">
         <button class="fq-clear" onclick="clearAllFiles()"><svg class="ri-ic" aria-hidden="true"><use href="#ri-close-line"></use></svg> Clear all</button>
       </div>
@@ -907,6 +999,8 @@ textarea.deob-ta:focus{border-color:var(--brand);}
         <div class="tab-panel" id="tp-classes"></div>
         <div class="tab-panel" id="tp-webhooks"></div>
         <div class="tab-panel" id="tp-mixins"></div>
+        <div class="tab-panel" id="tp-intel"></div>
+        <div class="tab-panel" id="tp-trends"></div>
         <div class="tab-panel" id="tp-deob">
           <div style="flex:1;min-height:0;display:flex;gap:0;flex-direction:column;">
             <div class="deob-picker-wrap">
@@ -1320,6 +1414,8 @@ var TAB_META = {
   classes: {t:"Class references", c:"Classes"},
   webhooks:{t:"Discord webhooks", c:"Webhooks"},
   mixins:  {t:"Mixin targets", c:"Mixins"},
+  intel:   {t:"Threat intelligence", c:"Intel DB"},
+  trends:  {t:"Intel trends", c:"Trends"},
   deob:    {t:"Deobfuscation workbench", c:"Deobfuscator"}
 };
 function switchTab(name) {
@@ -1332,6 +1428,7 @@ function switchTab(name) {
   var tp = document.getElementById("tp-"+name);
   if(tb) tb.classList.add("active");
   if(tp) tp.classList.add("active");
+  if((name==="intel"||name==="trends") && window.Rho9Intel) Rho9Intel.onShow(name);
   var meta = TAB_META[name];
   if(meta){
     var pt = document.getElementById("pageTitle"); if(pt) pt.textContent = meta.t;
@@ -1483,12 +1580,523 @@ var Rho9Bridge = (function(){
     }catch(e){ return false; }
   }
 
+  // ---- persistent threat-intel logging/reads ----
+  // Gated on isFound() (server reachable + handshake matched) rather than
+  // isReady(): the intel DB lives on the bridge and does NOT need the decompiler
+  // engine, so intel still logs for .zip/.class drops even when no engine is set
+  // up. When no bridge is present, every call is a silent no-op and the UI falls
+  // back to "connect the bridge to enable threat intel" -- nothing else changes.
+  function intelSupported(){ return isFound() && state.caps && state.caps.intel !== false; }
+  async function logIntel(payload){
+    if(!intelSupported()) return false;
+    try{
+      var resp = await fetch(state.url+"/rho9/intel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE },
+        body: JSON.stringify(payload)
+      });
+      return resp.ok;
+    }catch(e){ return false; }
+  }
+  async function intelGet(path){
+    if(!intelSupported()) return null;
+    try{
+      var resp = await fetch(state.url+"/rho9/intel"+path, {
+        headers: { "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE }, cache: "no-store"
+      });
+      if(!resp.ok) return null;
+      return await resp.json();
+    }catch(e){ return null; }
+  }
+
+  // ---- Discord attribution / ingestion / abuse-report helpers ----
+  function webhookInfoSupported(){ return isFound() && state.caps && state.caps.webhook_info !== false; }
+  function discordFetchSupported(){ return isFound() && state.caps && state.caps.discord_fetch !== false; }
+  function abuseContactSupported(){ return isFound() && state.caps && state.caps.abuse_contact !== false; }
+
+  async function webhookInfo(url){
+    if(!webhookInfoSupported()) return null;
+    try{
+      var r = await fetch(state.url+"/rho9/webhook-info?url="+encodeURIComponent(url), {
+        headers: { "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE }, cache: "no-store"
+      });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){ return null; }
+  }
+  async function abuseContact(target){
+    if(!abuseContactSupported()) return null;
+    try{
+      var r = await fetch(state.url+"/rho9/abuse-contact?target="+encodeURIComponent(target), {
+        headers: { "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE }, cache: "no-store"
+      });
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){ return null; }
+  }
+  async function fetchDiscord(url){
+    if(!discordFetchSupported()) throw new Error("Local bridge not connected.");
+    var r = await fetch(state.url+"/rho9/fetch-discord?url="+encodeURIComponent(url), {
+      headers: { "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE }
+    });
+    if(!r.ok){
+      var msg = "Discord fetch failed (HTTP "+r.status+")";
+      try{ var j = await r.json(); if(j && j.error) msg = j.error; }catch(e){}
+      throw new Error(msg);
+    }
+    var name = "discord_download.bin";
+    try{ var hf = r.headers.get("X-Filename"); if(hf) name = decodeURIComponent(hf); }catch(e){}
+    var buf = await r.arrayBuffer();
+    return { name: name, buf: buf };
+  }
+
   return {
     scan:scan, isReady:isReady, isFound:isFound, getCaps:getCaps,
     decompileToZip:decompileToZip,
     saveSession:saveSession, fetchSession:fetchSession, clearSession:clearSession,
+    logIntel:logIntel, intelGet:intelGet, intelSupported:intelSupported,
+    webhookInfo:webhookInfo, webhookInfoSupported:webhookInfoSupported,
+    abuseContact:abuseContact, abuseContactSupported:abuseContactSupported,
+    fetchDiscord:fetchDiscord, discordFetchSupported:discordFetchSupported,
     autoDecompileEnabled:autoDecompileEnabled, setAutoDecompile:setAutoDecompile,
     updatePill:updatePill
+  };
+})();
+
+// ============================================================================
+// THREAT INTEL (client side)
+// After every analysis, the finding set (sample hash + every IOC + derived
+// attack methods) is POSTed to the bridge's persistent DB. The Rho9Intel
+// module reads the /rho9/intel* endpoints to render the Intel DB table, the
+// attacker drilldown, and the Trends charts. All of it degrades to a friendly
+// "connect the bridge" message when no bridge is present, and never touches
+// or blocks the analysis path itself.
+// ============================================================================
+
+// ---- SHA-256 of the uploaded artifact(s) ----
+// Prefer WebCrypto (available on the 127.0.0.1 origin the bridge serves the
+// page from). Fall back to a compact pure-JS implementation for contexts such
+// as file:// where crypto.subtle may be absent, so a sample hash is ALWAYS
+// produced and attacker fingerprints never silently fail to record.
+function _rho9Hex(u8){ var s=""; for(var i=0;i<u8.length;i++){ s+=(u8[i]<16?"0":"")+u8[i].toString(16); } return s; }
+function _rho9Sha256JS(msg){
+  function rotr(n,x){ return (x>>>n)|(x<<(32-n)); }
+  var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var l=msg.length, withOne=l+1;
+  var k=(56-(withOne%64)+64)%64;
+  var totalLen=withOne+k+8;
+  var m=new Uint8Array(totalLen);
+  m.set(msg,0); m[l]=0x80;
+  var dv=new DataView(m.buffer);
+  dv.setUint32(totalLen-8, Math.floor(l/0x20000000)>>>0);   // (l*8) high 32 bits
+  dv.setUint32(totalLen-4, (l*8)>>>0);                        // (l*8) low 32 bits
+  var w=new Uint32Array(64), t;
+  for(var off=0;off<totalLen;off+=64){
+    for(t=0;t<16;t++) w[t]=dv.getUint32(off+t*4);
+    for(t=16;t<64;t++){
+      var s0=rotr(7,w[t-15])^rotr(18,w[t-15])^(w[t-15]>>>3);
+      var s1=rotr(17,w[t-2])^rotr(19,w[t-2])^(w[t-2]>>>10);
+      w[t]=(w[t-16]+s0+w[t-7]+s1)>>>0;
+    }
+    var a=H[0],b=H[1],c=H[2],d=H[3],e=H[4],f=H[5],g=H[6],h=H[7];
+    for(t=0;t<64;t++){
+      var S1=rotr(6,e)^rotr(11,e)^rotr(25,e);
+      var ch=(e&f)^((~e)&g);
+      var t1=(h+S1+ch+K[t]+w[t])>>>0;
+      var S0=rotr(2,a)^rotr(13,a)^rotr(22,a);
+      var maj=(a&b)^(a&c)^(b&c);
+      var t2=(S0+maj)>>>0;
+      h=g; g=f; f=e; e=(d+t1)>>>0; d=c; c=b; b=a; a=(t1+t2)>>>0;
+    }
+    H[0]=(H[0]+a)>>>0;H[1]=(H[1]+b)>>>0;H[2]=(H[2]+c)>>>0;H[3]=(H[3]+d)>>>0;
+    H[4]=(H[4]+e)>>>0;H[5]=(H[5]+f)>>>0;H[6]=(H[6]+g)>>>0;H[7]=(H[7]+h)>>>0;
+  }
+  var out=""; for(var i=0;i<8;i++){ out+=("00000000"+(H[i]>>>0).toString(16)).slice(-8); }
+  return out;
+}
+async function rho9Sha256(parts){
+  var total=0,i; for(i=0;i<parts.length;i++) total+=parts[i].length;
+  var all=new Uint8Array(total), off=0;
+  for(i=0;i<parts.length;i++){ all.set(parts[i],off); off+=parts[i].length; }
+  if(window.crypto && crypto.subtle && crypto.subtle.digest){
+    try{ var d=await crypto.subtle.digest("SHA-256", all.buffer); return _rho9Hex(new Uint8Array(d)); }catch(e){}
+  }
+  return _rho9Sha256JS(all);
+}
+
+// Human-readable attack methods for a finished analysis, derived from the same
+// signals the threat score already computed (IOC types + signature families +
+// behavioural evidence). Stored per sample so Trends can chart the corpus.
+function deriveAttackMethods(ts){
+  var set={};
+  function put(m){ if(m) set[m]=1; }
+  var t={}; S.iocs.forEach(function(i){ t[i.type]=(t[i.type]||0)+1; });
+  if(t.webhook) put("Discord webhook exfiltration");
+  if(t.telegram_api||t.telegram_token) put("Telegram C2");
+  if(t.payload_url) put("Staged payload fetch");
+  if(t.geoip_url) put("Victim IP geolocation");
+  if(t.crypto_wallet) put("Crypto wallet targeting");
+  var famMap={ remoteLoader:"Remote code loading", downloadLogic:"Remote code loading",
+    classpathInjection:"Classpath injection", networkComms:"Network communication",
+    tokenStealer:"Token/credential theft", passwordStealer:"Token/credential theft",
+    cookieStealer:"Browser data theft", browserStealer:"Browser data theft",
+    clipboard:"Clipboard hijack", clipper:"Clipboard hijack",
+    keylogger:"Keylogging", screenshot:"Screenshot capture",
+    persistence:"Persistence", selfSpread:"Self-propagation",
+    skidfuscator:"Obfuscation", obfuscatorHeuristic:"Obfuscation" };
+  (ts.families||[]).forEach(function(f){ put(famMap[f]||("family: "+f)); });
+  (ts.evidence||[]).forEach(function(e){
+    var r=e.reason||"";
+    if(r.indexOf("XOR obfuscation")>=0) put("String obfuscation (XOR)");
+    if(r.indexOf("remote executable")>=0) put("Remote executable staging");
+    if(r.indexOf("cleartext HTTP")>=0) put("Cleartext HTTP delivery");
+  });
+  return Object.keys(set);
+}
+
+var _whInfoCache = {};   // webhook url -> resolved info (avoid re-hitting Discord)
+async function resolveWebhookMeta(){
+  // Best-effort, capped, cached. Returns {meta:[...], extraIocs:[...]}.
+  var out = { meta: [], extraIocs: [] };
+  if(!window.Rho9Bridge || !Rho9Bridge.webhookInfoSupported()) return out;
+  var seen = {}, urls = [];
+  S.iocs.forEach(function(i){ if(i.type==="webhook" && !seen[i.value]){ seen[i.value]=1; urls.push(i.value); } });
+  var seenGuild = {}, seenChan = {};
+  for(var i=0; i<Math.min(urls.length, 25); i++){
+    var url = urls[i];
+    var info = _whInfoCache[url];
+    if(info === undefined){
+      info = await Rho9Bridge.webhookInfo(url);
+      _whInfoCache[url] = info || null;
+    }
+    if(!info || !info.ok) continue;
+    out.meta.push({ value:url, webhook_id:info.webhook_id, name:info.name,
+      guild_id:info.guild_id, channel_id:info.channel_id,
+      avatar:info.avatar, application_id:info.application_id });
+    if(info.guild_id && !seenGuild[info.guild_id]){
+      seenGuild[info.guild_id]=1;
+      out.extraIocs.push({ type:"discord_guild", value:String(info.guild_id), source:"webhook attribution", decoded:false });
+    }
+    if(info.channel_id && !seenChan[info.channel_id]){
+      seenChan[info.channel_id]=1;
+      out.extraIocs.push({ type:"discord_channel", value:String(info.channel_id), source:"webhook attribution", decoded:false });
+    }
+  }
+  return out;
+}
+
+async function buildIntelPayload(){
+  var ts=threatScore();
+  var band=ts.score>=70?"high":ts.score>=35?"susp":"low";
+  var lf=S.loadedFiles||[], parts=[], i;
+  for(i=0;i<lf.length;i++){
+    if(lf[i] && lf[i].file){ try{ parts.push(new Uint8Array(await lf[i].file.arrayBuffer())); }catch(e){} }
+  }
+  var sha = parts.length ? await rho9Sha256(parts)
+                         : await rho9Sha256([new TextEncoder().encode(S.archiveName||"unknown")]);
+  var iocs=S.iocs.map(function(x){ return {type:x.type, value:x.value, source:x.source||"", decoded:!!x.decoded}; });
+
+  // Discord webhook attribution: resolve server/channel/name so the same
+  // operator can be linked across multiple webhooks and samples.
+  var wm = await resolveWebhookMeta();
+  var haveKey = {};
+  iocs.forEach(function(x){ haveKey[x.type+"::"+x.value]=1; });
+  wm.extraIocs.forEach(function(x){ if(!haveKey[x.type+"::"+x.value]){ haveKey[x.type+"::"+x.value]=1; iocs.push(x); } });
+
+  return {
+    sample:{
+      sha256:sha,
+      filename:(S.archiveName||(lf[0]&&lf[0].name)||"unknown"),
+      score:ts.score, band:band,
+      families:ts.families||[],
+      attack_methods:deriveAttackMethods(ts),
+      file_count:Object.keys(S.files).length,
+      class_count:Object.keys(S.classes).length
+    },
+    iocs:iocs,
+    webhook_meta:wm.meta
+  };
+}
+
+async function logCurrentAnalysisToIntel(){
+  if(!window.Rho9Bridge || !Rho9Bridge.intelSupported()) return;   // no bridge/intel -> silent no-op
+  if(!S.loadedFiles || !S.loadedFiles.length) return;              // nothing was queued
+  if(Object.keys(S.files).length===0) return;                      // decompile/parse produced nothing -> don't record
+  try{
+    var payload=await buildIntelPayload();
+    var ok=await Rho9Bridge.logIntel(payload);
+    if(ok){
+      Rho9Intel.refreshBadge();
+      if(activeTab==="intel"||activeTab==="trends") Rho9Intel.refreshCurrent();
+    }
+  }catch(e){ if(window.console&&console.debug) console.debug("[rho9-intel] log failed: "+(e&&e.message)); }
+}
+
+var Rho9Intel = (function(){
+  var view="table";      // "table" | "attacker"
+  var current=null;      // {type,value} while in the attacker drilldown
+  var lastIocs=null;     // cached /iocs response for client-side filtering
+
+  function fmtDate(ts){
+    if(!ts) return "-";
+    var d=new Date(ts*1000);
+    function p(n){ return (n<10?"0":"")+n; }
+    return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+  }
+  function bandChip(band,score){
+    var col=band==="high"?"var(--red)":band==="susp"?"var(--amber)":"var(--green)";
+    var lbl=band==="high"?"HIGH":band==="susp"?"SUSP":"LOW";
+    return "<span class=\"chip\" style=\"color:"+col+";background:rgba(255,255,255,.05);\">"+lbl+(score!=null?" "+score:"")+"</span>";
+  }
+  function bridgeMsg(){
+    return "<div class=\"empty\">The threat-intel database lives on the local decompile bridge.<br><br>"+
+      "Start it with <span class=\"code-viewer\" style=\"display:inline-block;margin-top:4px;\">python rho9_decompile_server.py</span> "+
+      "and open this page from it. From then on, every analysis you run is logged here automatically and this view becomes your attacker-tracking knowledge base.</div>";
+  }
+  function setIntelBadge(n){
+    var el=document.getElementById("tb-intel"); if(!el) return;
+    var b=el.querySelector(".badge");
+    if(b){ b.textContent=n; b.style.display=n>0?"inline":"none"; }
+    if(n>0) el.classList.add("danger-tab"); else el.classList.remove("danger-tab");
+  }
+  async function refreshBadge(){
+    if(!Rho9Bridge.intelSupported()){ setIntelBadge(0); return; }
+    var d=await Rho9Bridge.intelGet("/iocs?limit=1");
+    setIntelBadge(d && d.total ? d.total : 0);
+  }
+
+  function typeOptions(sel){
+    var types={}; (lastIocs&&lastIocs.iocs||[]).forEach(function(i){ types[i.type]=1; });
+    var opts="<option value=\"\">All types</option>";
+    Object.keys(types).sort().forEach(function(t){
+      opts+="<option value=\""+escAttr(t)+"\""+(t===sel?" selected":"")+">"+esc(t)+"</option>";
+    });
+    return opts;
+  }
+  function tableShell(){
+    var h="";
+    h+="<div class=\"card\"><div class=\"card-body\"><div class=\"intel-note\">Every indicator this bridge has logged, ranked by how many distinct samples reused it. A rising count is a repeat-offender fingerprint: the same webhook, C2, or staging link showing up across many droppers points at one operator. Click any row to open the attacker profile.</div></div></div>";
+    h+="<div class=\"intel-toolbar\">";
+    h+="<input class=\"tool-search\" id=\"intelSearch\" placeholder=\"Filter by indicator value...\" value=\""+escAttr(Rho9Intel._q||"")+"\" oninput=\"Rho9Intel.setQuery(this.value)\">";
+    h+="<select class=\"tool-select\" onchange=\"Rho9Intel.setType(this.value)\">"+typeOptions(Rho9Intel._type||"")+"</select>";
+    h+="<button class=\"btn-close-m\" style=\"padding:6px 12px;\" onclick=\"Rho9Intel.reload()\">Refresh</button>";
+    h+="<span class=\"intel-tot\" id=\"intelShown\"></span>";
+    h+="</div>";
+    h+="<div class=\"ioc-table-wrap\"><table class=\"ioc-table\"><thead><tr><th>Type</th><th>Indicator</th><th style=\"text-align:right;\">Times seen</th><th>First seen</th><th>Last seen</th></tr></thead><tbody id=\"intelTbody\"></tbody></table></div>";
+    return h;
+  }
+  function fillTable(){
+    var body=document.getElementById("intelTbody"), cnt=document.getElementById("intelShown");
+    if(!body) return;
+    var q=(Rho9Intel._q||"").toLowerCase(), tf=Rho9Intel._type||"";
+    var rows=(lastIocs&&lastIocs.iocs||[]).filter(function(i){
+      if(tf && i.type!==tf) return false;
+      if(q && i.value.toLowerCase().indexOf(q)<0) return false;
+      return true;
+    });
+    if(cnt) cnt.textContent=rows.length+" shown / "+(lastIocs?lastIocs.total:0)+" tracked";
+    if(!rows.length){ body.innerHTML="<tr><td colspan=\"5\"><div class=\"empty\" style=\"padding:24px;\">No indicators match this filter.</div></td></tr>"; return; }
+    var h="";
+    rows.forEach(function(i){
+      var cls=i.times_seen>=5?"hot":(i.times_seen>=2?"warm":"");
+      h+="<tr class=\"ioc-tr intel-row\" data-type=\""+escAttr(i.type)+"\" data-value=\""+escAttr(i.value)+"\" onclick=\"Rho9Intel.openFrom(this)\">"+
+         "<td><span class=\"ioc-type-badge ioc-"+esc(i.type)+"\">"+esc(i.type)+"</span></td>"+
+         "<td class=\"ioc-val-cell\">"+esc(i.value)+"</td>"+
+         "<td class=\"intel-seen "+cls+"\">"+i.times_seen+"</td>"+
+         "<td class=\"ioc-src-cell\">"+fmtDate(i.first_seen)+"</td>"+
+         "<td class=\"ioc-src-cell\">"+fmtDate(i.last_seen)+"</td></tr>";
+    });
+    body.innerHTML=h;
+  }
+  async function renderTable(force){
+    view="table"; current=null;
+    var el=document.getElementById("tp-intel");
+    if(!Rho9Bridge.intelSupported()){ el.innerHTML=bridgeMsg(); return; }
+    if(force || !lastIocs){
+      el.innerHTML="<div class=\"empty\">Loading intel...</div>";
+      var d=await Rho9Bridge.intelGet("/iocs?limit=5000");
+      if(!d){ el.innerHTML=bridgeMsg(); return; }
+      lastIocs=d;
+    }
+    el.innerHTML=tableShell();
+    fillTable();
+  }
+  async function renderAttacker(type,value){
+    view="attacker"; current={type:type,value:value};
+    var el=document.getElementById("tp-intel");
+    if(!Rho9Bridge.intelSupported()){ el.innerHTML=bridgeMsg(); return; }
+    el.innerHTML="<div class=\"empty\">Loading attacker profile...</div>";
+    var d=await Rho9Bridge.intelGet("/ioc?type="+encodeURIComponent(type)+"&value="+encodeURIComponent(value));
+    var back="<button class=\"intel-back\" onclick=\"Rho9Intel.back()\">&#8592; Back to indicators</button>";
+    if(!d){ el.innerHTML=back+"<div class=\"empty\">Indicator not found in the intel DB.</div>"; return; }
+    var io=d.ioc, h=back;
+    h+="<div class=\"card\"><div class=\"card-body\">";
+    h+="<div class=\"sect-lbl\">Attacker indicator</div>";
+    h+="<div><span class=\"ioc-type-badge ioc-"+esc(io.type)+"\">"+esc(io.type)+"</span></div>";
+    h+="<div class=\"attacker-hd\" style=\"margin-top:8px;\">"+esc(io.value)+
+       " <button class=\"btn-action\" data-u=\""+escAttr(io.value)+"\" onclick=\"copyText(this.dataset.u,this)\">&#128203; Copy</button></div>";
+    h+="<div class=\"attacker-meta\">"+
+       "<span>Seen in <b>"+io.times_seen+"</b> distinct sample"+(io.times_seen===1?"":"s")+"</span>"+
+       "<span>First seen <b>"+fmtDate(io.first_seen)+"</b></span>"+
+       "<span>Last seen <b>"+fmtDate(io.last_seen)+"</b></span></div>";
+    h+="</div></div>";
+
+    // Discord webhook attribution: who/where this indicator is tied to, plus
+    // every other webhook seen from the same server (the persistent operator id).
+    if(d.webhook_meta || (d.related_webhooks && d.related_webhooks.length)){
+      h+="<div class=\"card\"><div class=\"card-body\">";
+      h+="<div class=\"sect-lbl\">Discord attribution</div>";
+      if(d.webhook_meta){
+        var wm=d.webhook_meta;
+        h+="<div class=\"attacker-meta\">"+
+           "<span>Webhook name <b>"+esc(wm.name||"n/a")+"</b></span>"+
+           "<span>Server (guild) <b>"+esc(String(wm.guild_id||"n/a"))+"</b></span>"+
+           "<span>Channel <b>"+esc(String(wm.channel_id||"n/a"))+"</b></span></div>";
+      }
+      h+="<div class=\"intel-note\" style=\"margin-top:6px;\">Discord does not reveal a webhook's creator to a token holder. The guild and channel are the persistent operator fingerprint: the same server appearing under different webhooks across samples is the same actor.</div>";
+      if(d.related_webhooks && d.related_webhooks.length){
+        h+="<div class=\"sect-lbl\" style=\"margin-top:12px;\">Other webhooks from the same server ("+d.related_webhooks.length+")</div>";
+        h+="<div class=\"ioc-table-wrap\"><table class=\"ioc-table\"><thead><tr><th>Webhook</th><th>Name</th></tr></thead><tbody>";
+        d.related_webhooks.forEach(function(rw){
+          h+="<tr class=\"ioc-tr intel-row\" data-type=\"webhook\" data-value=\""+escAttr(rw.value)+"\" onclick=\"Rho9Intel.openFrom(this)\">"+
+             "<td class=\"ioc-val-cell\">"+esc(rw.value)+"</td>"+
+             "<td class=\"ioc-src-cell\">"+esc(rw.name||"n/a")+"</td></tr>";
+        });
+        h+="</tbody></table></div>";
+      }
+      h+="</div></div>";
+    }
+
+    h+="<div class=\"card\"><div class=\"card-body\">";
+    h+="<div class=\"sect-lbl\">Samples containing this indicator ("+d.samples.length+")</div>";
+    if(!d.samples.length){ h+="<div class=\"intel-note\">None on record.</div>"; }
+    else{
+      h+="<div class=\"ioc-table-wrap\"><table class=\"ioc-table\"><thead><tr><th>Sample</th><th>Triage</th><th>Attack methods</th><th>First tied</th></tr></thead><tbody>";
+      d.samples.forEach(function(s){
+        h+="<tr class=\"ioc-tr\"><td class=\"ioc-val-cell\">"+esc(s.filename||"unknown")+
+           "<div style=\"color:var(--text3);font-size:10px;\">"+esc((s.sha256||"").slice(0,16))+"...</div></td>"+
+           "<td>"+bandChip(s.band,s.score)+"</td>"+
+           "<td>"+(s.attack_methods||[]).map(function(m){ return "<span class=\"chip method\">"+esc(m)+"</span>"; }).join("")+"</td>"+
+           "<td class=\"ioc-src-cell\">"+fmtDate(s.ts)+(s.decoded?" <span class=\"chip\">decoded</span>":"")+"</td></tr>";
+      });
+      h+="</tbody></table></div>";
+    }
+    h+="</div></div>";
+
+    h+="<div class=\"card\"><div class=\"card-body\">";
+    h+="<div class=\"sect-lbl\">Co-occurring infrastructure ("+d.cooccurring.length+")</div>";
+    h+="<div class=\"intel-note\">Other indicators that appeared in the same samples. These are most likely the same operator's additional endpoints. Click one to pivot to it.</div>";
+    if(!d.cooccurring.length){ h+="<div class=\"intel-note\">None.</div>"; }
+    else{
+      h+="<div class=\"ioc-table-wrap\"><table class=\"ioc-table\"><thead><tr><th>Type</th><th>Indicator</th><th style=\"text-align:right;\">Shared</th><th style=\"text-align:right;\">Times seen</th></tr></thead><tbody>";
+      d.cooccurring.forEach(function(c){
+        h+="<tr class=\"ioc-tr intel-row\" data-type=\""+escAttr(c.type)+"\" data-value=\""+escAttr(c.value)+"\" onclick=\"Rho9Intel.openFrom(this)\">"+
+           "<td><span class=\"ioc-type-badge ioc-"+esc(c.type)+"\">"+esc(c.type)+"</span></td>"+
+           "<td class=\"ioc-val-cell\">"+esc(c.value)+"</td>"+
+           "<td class=\"intel-seen\">"+c.shared_samples+"</td>"+
+           "<td class=\"intel-seen\">"+c.times_seen+"</td></tr>";
+      });
+      h+="</tbody></table></div>";
+    }
+    h+="</div></div>";
+    el.innerHTML=h;
+  }
+
+  function trendStat(label,val,icon){
+    return "<div class=\"stat-card\" style=\"cursor:default;\"><div class=\"stat-ic\" style=\"background:rgba(34,201,232,.12);color:var(--brand);font-size:18px;\"><svg class=\"ri-ic\" aria-hidden=\"true\"><use href=\"#"+icon+"\"></use></svg></div>"+
+           "<div class=\"sc-body\"><div class=\"stat-lbl\">"+label+"</div><div class=\"stat-val\">"+val+"</div></div></div>";
+  }
+  function barList(items,isIoc){
+    if(!items||!items.length) return "<div class=\"intel-note\">No data yet.</div>";
+    var max=items.reduce(function(a,b){ return Math.max(a,b.value); },0)||1;
+    var h="";
+    items.forEach(function(it){
+      var pct=Math.max(2,Math.round(it.value/max*100));
+      var lblClass="mini-bar-label"+(it.mono?" mono":"");
+      var fillClass="mini-bar-fill"+(isIoc&&it.value>=5?" red":"");
+      if(isIoc){
+        h+="<div class=\"mini-bar-row\" style=\"cursor:pointer;\" data-type=\""+escAttr(it.type)+"\" data-value=\""+escAttr(it.label)+"\" onclick=\"Rho9Intel.openFromTrends(this)\">";
+      }else{
+        h+="<div class=\"mini-bar-row\">";
+      }
+      h+="<span class=\""+lblClass+"\" title=\""+escAttr(it.label)+"\">"+esc(it.label)+"</span>";
+      h+="<span class=\"mini-bar-track\"><span class=\""+fillClass+"\" style=\"width:"+pct+"%;\"></span></span>";
+      h+="<span class=\"mini-bar-val\">"+it.value+"</span></div>";
+    });
+    return h;
+  }
+  function sparkline(days){
+    if(!days||!days.length) return "<div class=\"intel-note\">No activity logged yet.</div>";
+    var n=days.length, w=Math.max(280,n*38), hgt=92, pad=18;
+    var max=days.reduce(function(a,b){ return Math.max(a,b.count); },0)||1;
+    function x(i){ return pad+(n<=1?(w-2*pad)/2:(i*(w-2*pad)/(n-1))); }
+    function y(v){ return hgt-pad-(v/max)*(hgt-2*pad); }
+    var pts=days.map(function(d,i){ return x(i)+","+y(d.count); }).join(" ");
+    var svg="<svg viewBox=\"0 0 "+w+" "+hgt+"\" width=\""+w+"\" height=\""+hgt+"\">";
+    svg+="<line x1=\""+pad+"\" y1=\""+(hgt-pad)+"\" x2=\""+(w-pad)+"\" y2=\""+(hgt-pad)+"\" stroke=\"var(--bd)\" stroke-width=\"1\"/>";
+    svg+="<polyline fill=\"none\" stroke=\"var(--brand)\" stroke-width=\"2\" points=\""+pts+"\"/>";
+    days.forEach(function(d,i){ svg+="<circle cx=\""+x(i)+"\" cy=\""+y(d.count)+"\" r=\"2.6\" fill=\"var(--accent)\"/>"; });
+    svg+="</svg>";
+    return "<div class=\"spark-wrap\">"+svg+"</div><div class=\"intel-note\" style=\"display:flex;justify-content:space-between;\"><span>"+esc(days[0].day)+"</span><span>peak "+max+"/day</span><span>"+esc(days[n-1].day)+"</span></div>";
+  }
+  async function renderTrends(){
+    var el=document.getElementById("tp-trends");
+    if(!Rho9Bridge.intelSupported()){ el.innerHTML=bridgeMsg(); return; }
+    el.innerHTML="<div class=\"empty\">Loading trends...</div>";
+    var d=await Rho9Bridge.intelGet("/trends");
+    if(!d){ el.innerHTML=bridgeMsg(); return; }
+    var t=d.totals||{}, h="";
+    h+="<div class=\"trend-grid\">";
+    h+=trendStat("Samples tracked", t.samples||0, "ri-fingerprint-line");
+    h+=trendStat("Unique indicators", t.iocs||0, "ri-crosshair-2-line");
+    h+=trendStat("Analyses logged", t.analyses||0, "ri-file-list-3-line");
+    h+="</div>";
+    h+="<div class=\"card\"><div class=\"card-body\"><div class=\"sect-lbl\">Analyses over time</div>"+sparkline(d.analyses_by_day||[])+"</div></div>";
+    h+="<div class=\"card\"><div class=\"card-body\"><div class=\"sect-lbl\">Top repeat indicators (attacker fingerprints)</div>"+
+       barList((d.top_iocs||[]).map(function(i){ return {label:i.value, value:i.times_seen, mono:true, type:i.type}; }), true)+
+       "<div class=\"intel-note\" style=\"margin-top:8px;\">Click any bar to open that attacker's profile.</div></div></div>";
+    h+="<div class=\"card\"><div class=\"card-body\"><div class=\"sect-lbl\">Attack methods across corpus</div>"+
+       barList((d.methods||[]).map(function(m){ return {label:m.method, value:m.count}; }), false)+"</div></div>";
+    h+="<div class=\"card\"><div class=\"card-body\"><div class=\"sect-lbl\">Indicator types</div>"+
+       barList((d.iocs_by_type||[]).map(function(x){ return {label:x.type, value:x.count}; }), false)+"</div></div>";
+    el.innerHTML=h;
+  }
+
+  function onShow(name){
+    if(name==="intel"){
+      if(view==="attacker" && current) return renderAttacker(current.type,current.value);
+      return renderTable(false);
+    }
+    if(name==="trends") return renderTrends();
+  }
+
+  return {
+    _q:"", _type:"", _qt:null,
+    onShow:onShow,
+    refreshBadge:refreshBadge,
+    refreshCurrent:function(){
+      if(activeTab==="trends") return renderTrends();
+      if(activeTab==="intel"){
+        if(view==="attacker" && current) return renderAttacker(current.type,current.value);
+        return renderTable(true);   // force re-fetch so a just-logged sample's IOCs appear
+      }
+    },
+    reload:function(){ renderTable(true); },
+    back:function(){ renderTable(false); },
+    open:function(type,value){ renderAttacker(type,value); },
+    openFrom:function(el){ renderAttacker(el.dataset.type, el.dataset.value); },
+    openFromTrends:function(el){ current={type:el.dataset.type, value:el.dataset.value}; view="attacker"; switchTab("intel"); },
+    openExternal:function(type,value){ current={type:type, value:value}; view="attacker"; switchTab("intel"); },
+    setQuery:function(v){ Rho9Intel._q=v; clearTimeout(Rho9Intel._qt); Rho9Intel._qt=setTimeout(fillTable,150); },
+    setType:function(v){ Rho9Intel._type=v; fillTable(); }
   };
 })();
 
@@ -1662,6 +2270,11 @@ async function runQueue(){
     }
   }
   _queueRunning = false;
+  // Analysis fully done and rendered. If a bridge is connected, persist the
+  // finding set (sample hash + every IOC + derived attack methods) to the
+  // long-lived threat-intel DB. Fire-and-forget: it never blocks or alters the
+  // analysis, and is a silent no-op when no bridge/intel store is present.
+  logCurrentAnalysisToIntel();
 }
 
 // ---- CLASS PARSER ----
@@ -2280,7 +2893,8 @@ async function processFile(file, mergeMode){
       if(isModpackZip(entries)){
         await processModpackZip(entries, zip, file.name);
         deduplicateIOCs();
-        setStatus("Done (Modpack) — "+Object.keys(S.files).length+" files, "+S.iocs.length+" IOCs");
+        var _dc=S._modpackDecompiledCount||0;
+        setStatus("Done (Modpack"+(_dc?", "+_dc+" mod JAR"+(_dc===1?"":"s")+" decompiled":"")+") — "+Object.keys(S.files).length+" files, "+S.iocs.length+" IOCs");
         renderAll();
         if(window._rho9SaveCache) window._rho9SaveCache();
         return;
@@ -2396,6 +3010,8 @@ async function processModpackZip(entries, zip, filename){
   S.archiveName = filename;
   // Mark as modpack in state for rendering
   S._isModpack = true;
+  S._modpackDecompiledCount = 0;
+  S._modpackShallowCount = 0;
   // Read manifest.json if present
   var manifestEntry = entries.find(function(e){ return e.path.toLowerCase()==="manifest.json"; });
   var manifest = null;
@@ -2423,15 +3039,29 @@ async function processModpackZip(entries, zip, filename){
       var flagged=sigsFi.length>0||iocsFi.some(function(i){ return i.type==="webhook"; });
       S.files[path]={name:path.split("/").pop(),path:path,type:e2,text:text,flagged:flagged,sigs:sigsFi,infoSigs:infoFi4,isResource:isRes4,iocs:iocsFi,isModpackFile:true};
     }
-    // Attempt to process nested JARs within overrides/mods/
+    // Bundled mod JARs inside overrides/mods/: if the local bridge is connected,
+    // DECOMPILE each one and run the FULL source analysis (the same path a
+    // directly-dropped .jar takes), so the modpack's real risk is visible.
+    // Without the bridge, fall back to a shallow raw-bytecode class scan.
     if(e2==="jar"&&path.toLowerCase().indexOf("overrides/mods/")>=0){
       var jb=await entry.async("arraybuffer");
-      try{
-        var inner=await JSZip.loadAsync(jb);
-        var innerEntries=[]; inner.forEach(function(p2,ie2){ if(!ie2.dir) innerEntries.push({path:p2,entry:ie2}); });
-        if(isDecompiledZipFile(innerEntries)){
-          // it's already decompiled inside the modpack - won't happen but handle
-        } else {
+      var jarName=path.split("/").pop();
+      var decompiled=false;
+      if(window.Rho9Bridge && Rho9Bridge.isReady()){
+        try{
+          setStatus("Decompiling bundled mod "+jarName+" via local bridge...");
+          var jarFile=new File([jb], jarName, {type:"application/java-archive"});
+          var srcBuf=await Rho9Bridge.decompileToZip(jarFile);
+          var srcZip=await JSZip.loadAsync(srcBuf);
+          var srcEntries=[]; srcZip.forEach(function(p3,e3){ if(!e3.dir) srcEntries.push({path:p3,entry:e3}); });
+          await processDecompiledZip(srcEntries, srcZip, path+"!/");
+          decompiled=true;
+          S._modpackDecompiledCount=(S._modpackDecompiledCount||0)+1;
+        }catch(err){ /* fall through to the shallow scan below */ }
+      }
+      if(!decompiled){
+        try{
+          var inner=await JSZip.loadAsync(jb);
           var iPaths=Object.keys(inner.files);
           for(var j=0;j<iPaths.length;j++){
             var ip=iPaths[j], ie=inner.files[ip];
@@ -2439,9 +3069,10 @@ async function processModpackZip(entries, zip, filename){
               var cb2=await ie.async("arraybuffer"); processClassBuf(path+"!/"+ip,cb2);
             }
           }
-        }
-      }catch(err){}
-      if(!S.files[path]) S.files[path]={name:path.split("/").pop(),path:path,type:"jar",text:"[nested JAR in modpack]",flagged:false,sigs:[],iocs:[],isModpackFile:true};
+        }catch(err){}
+        S._modpackShallowCount=(S._modpackShallowCount||0)+1;
+      }
+      if(!S.files[path]) S.files[path]={name:jarName,path:path,type:"jar",text:decompiled?"[bundled mod JAR - decompiled and analysed]":"[bundled mod JAR - shallow class scan; connect the bridge for full analysis]",flagged:false,sigs:[],iocs:[],isModpackFile:true};
     }
   }
   // Store manifest data for overview display
@@ -2529,13 +3160,16 @@ function decodeJavaSourceArrays(text, path) {
   return decoded;
 }
 
-async function processDecompiledZip(entries, zip){
-  S.archiveName = S.archiveName || 'decompiled-source.zip';
-  S._isModpack = false;
+async function processDecompiledZip(entries, zip, pathPrefix){
+  pathPrefix = pathPrefix || '';
+  if(!pathPrefix){
+    S.archiveName = S.archiveName || 'decompiled-source.zip';
+    S._isModpack = false;
+  }
   var javaEntries = entries.filter(function(e){ return e.path.toLowerCase().endsWith('.java'); });
   var total = javaEntries.length, done = 0;
   for(var idx=0;idx<javaEntries.length;idx++){
-    var path = javaEntries[idx].path;
+    var path = pathPrefix + javaEntries[idx].path;
     var entry = javaEntries[idx].entry;
     done++;
     if(done % 5 === 0) setStatus('Parsing source ' + done + '/' + total + '...');
@@ -2588,7 +3222,7 @@ async function processDecompiledZip(entries, zip){
             "accesswidener","accesstransformer","cfgc","info","list","policy","sf","rsa","dsa"].indexOf(ext)>=0;
   });
   for(var idx=0;idx<otherEntries.length;idx++){
-    var path=otherEntries[idx].path, entry=otherEntries[idx].entry;
+    var path=pathPrefix + otherEntries[idx].path, entry=otherEntries[idx].entry;
     var ext=path.split('.').pop().toLowerCase();
     try{
       var text=await entry.async('text');
@@ -2923,7 +3557,14 @@ function renderOverview(){
     if(mp&&mp.name) h+="Name: <strong>"+esc(mp.name)+"</strong>";
     if(mp&&mp.version) h+=" v"+esc(mp.version);
     if(mp&&mp.minecraft&&mp.minecraft.version) h+=" &middot; MC "+esc(mp.minecraft.version);
-    h+="<br>This is a modpack manifest, not a decompiled mod JAR. The bundled mod JARs inside overrides/ have been scanned. To analyse a specific mod, decompile its .jar at <a href=\"https://www.decompiler.com\" target=\"_blank\">decompiler.com</a> and load the resulting .zip.</div>";
+    var dc=S._modpackDecompiledCount||0, sc=S._modpackShallowCount||0;
+    if(dc>0){
+      h+="<br>"+dc+" bundled mod JAR"+(dc===1?"":"s")+" inside overrides/mods/ "+(dc===1?"was":"were")+" decompiled via the local bridge and fully analysed; the score above reflects their decompiled source.";
+      if(sc>0) h+=" "+sc+" more could not be decompiled and got a shallow class scan only.";
+    } else {
+      h+="<br>This is a modpack manifest, not a decompiled mod JAR. The bundled mod JARs inside overrides/mods/ were given a shallow class scan only. Connect the local decompile bridge to auto-decompile and fully analyse them, or decompile a specific .jar at <a href=\"https://www.decompiler.com\" target=\"_blank\">decompiler.com</a> and load the resulting .zip.";
+    }
+    h+="</div>";
   }
 
   // ---- verdict card with score ring ----
@@ -3397,7 +4038,7 @@ function renderMixins(){
 }
 
 // ---- WEBHOOKS TAB ----
-function renderWebhooks(){ var el=document.getElementById("tp-webhooks"); var whs=S.iocs.filter(function(i){ return i.type==="webhook"; }); if(!whs.length){ el.innerHTML="<div class=\"empty\">No webhooks detected</div>"; return; } var h="<div class=\"wh-warning\">&#9888; "+whs.length+" Discord webhook(s) detected. Use Kill to sever C2 communication.</div>"; whs.forEach(function(wh,i){ h+="<div class=\"wh-card\"><div class=\"wh-num\">WEBHOOK #"+(i+1)+"</div><div class=\"wh-url\">"+esc(wh.value)+"</div><div class=\"wh-src\">Detected in: "+esc(wh.source)+"</div><div class=\"wh-btns\"><button class=\"btn-action info\" data-u=\""+escAttr(wh.value)+"\" onclick=\"fetchWhInfo(this.dataset.u)\">&#9432; Fetch Info</button><button class=\"btn-action kill\" data-u=\""+escAttr(wh.value)+"\" onclick=\"confirmKill(this.dataset.u)\">&#10005; Kill Webhook</button><button class=\"btn-action\" data-u=\""+escAttr(wh.value)+"\" onclick=\"copyText(this.dataset.u,this)\">&#128203; Copy URL</button></div><div class=\"wh-result-area\" id=\"wh-result-"+i+"\"></div></div>"; }); el.innerHTML=h; }
+function renderWebhooks(){ var el=document.getElementById("tp-webhooks"); var whs=S.iocs.filter(function(i){ return i.type==="webhook"; }); if(!whs.length){ el.innerHTML="<div class=\"empty\">No webhooks detected</div>"; return; } var h="<div class=\"wh-warning\">&#9888; "+whs.length+" Discord webhook(s) detected. Use Kill to sever C2 communication.</div><div style=\"margin-bottom:12px;\"><button class=\"btn-action\" onclick=\"showReportBuilder()\">&#9873; Build abuse report</button></div>"; whs.forEach(function(wh,i){ h+="<div class=\"wh-card\"><div class=\"wh-num\">WEBHOOK #"+(i+1)+"</div><div class=\"wh-url\">"+esc(wh.value)+"</div><div class=\"wh-src\">Detected in: "+esc(wh.source)+"</div><div class=\"wh-btns\"><button class=\"btn-action info\" data-u=\""+escAttr(wh.value)+"\" onclick=\"fetchWhInfo(this.dataset.u)\">&#9432; Fetch Info</button><button class=\"btn-action kill\" data-u=\""+escAttr(wh.value)+"\" onclick=\"confirmKill(this.dataset.u)\">&#10005; Kill Webhook</button><button class=\"btn-action\" data-u=\""+escAttr(wh.value)+"\" onclick=\"copyText(this.dataset.u,this)\">&#128203; Copy URL</button></div><div class=\"wh-result-area\" id=\"wh-result-"+i+"\"></div></div>"; }); el.innerHTML=h; }
 
 // ---- DEOBFUSCATOR ----
 function sendToDeob(str){ document.getElementById("deobInput").value=str; switchTab("deob"); runAllPassesGlobal(); }
@@ -3445,10 +4086,179 @@ function filterDeobPicker(q){ var filt=document.getElementById("deobPickerFilter
 function batchDeobVisible(){ var rows=document.querySelectorAll(".picker-row"); var results=[]; for(var i=0;i<rows.length;i++){ if(rows[i].style.display==="none") continue; var s=rows[i].dataset.s; if(!s||s.length<4) continue; var r=deobAll(s); if(r.chain.length>0) results.push({input:s,result:r,src:rows[i].dataset.src||""}); } var ce=document.getElementById("deobChain"),fe=document.getElementById("deobFinal"); if(!results.length){ ce.innerHTML="<div class='deob-none'>No transformations found.</div>"; fe.textContent=""; return; } var h="<div style='font-family:var(--sans);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:8px;'>"+results.length+" decoded:</div>"; results.forEach(function(item){ h+="<div class='batch-result'><div class='batch-input-hdr'>["+esc(item.src)+"]: "+esc(item.input.slice(0,100))+(item.input.length>100?"&hellip;":"")+"</div>"+item.result.chain.map(function(c){ return "<div class='deob-step'><span class='dstep-pass'>"+esc(c.pass)+"</span><div class='dstep-out'>"+esc(c.output.slice(0,500))+"</div></div>"; }).join("")+"<div class='ideob-final'>&#9654; <strong>"+esc(item.result.final.slice(0,500))+"</strong></div></div>"; }); ce.innerHTML=h; fe.textContent=results.map(function(r){ return r.result.final; }).join("\n---\n"); }
 
 // ---- WEBHOOK ACTIONS ----
-async function fetchWhInfo(url){ showInfoModal("Fetching Webhook Info","<div class=\"loading-bar\"></div><p>Querying Discord API...</p>"); try{ var r=await fetch(url,{method:"GET"}); var d=await r.json(); showInfoModal("Webhook Info: HTTP "+r.status,"<div class=\"info-kv\">"+infoRow("Status","HTTP "+r.status)+infoRow("ID",d.id||"n/a")+infoRow("Name",d.name||"n/a")+infoRow("Channel",d.channel_id||"n/a")+infoRow("Guild",d.guild_id||"n/a")+infoRow("Type",d.type||"n/a")+"</div><div class=\"section-hdr\">Raw JSON</div><div class=\"code-viewer\">"+esc(JSON.stringify(d,null,2))+"</div>"); }catch(e){ showInfoModal("Webhook Info","<div class=\"err-box\">CORS restriction prevented direct fetch.</div><div class=\"section-hdr\">Run manually</div><div class=\"code-viewer\">curl \""+esc(url)+"\"</div>"); } }
+async function fetchWhInfo(url){
+  showInfoModal("Fetching Webhook Info","<div class=\"loading-bar\"></div><p>Resolving via local bridge...</p>");
+  var d = null;
+  if(window.Rho9Bridge && Rho9Bridge.webhookInfoSupported()){ d = await Rho9Bridge.webhookInfo(url); }
+  if(d && d.ok){
+    var alive = d.alive;
+    var body = "<div class=\"info-kv\">"+
+      infoRow("Status", d.status!=null ? ("HTTP "+d.status+(alive?" (live)":" (dead / invalid)")) : "n/a")+
+      infoRow("Webhook ID", d.webhook_id||"n/a")+
+      infoRow("Name", d.name||"n/a")+
+      infoRow("Server (guild)", d.guild_id||"n/a")+
+      infoRow("Channel", d.channel_id||"n/a")+
+      infoRow("Type", d.type!=null?d.type:"n/a")+
+      "</div>";
+    body += "<div class=\"section-hdr\">Attribution</div><div class=\"intel-note\">"+esc(d.note||"")+"</div>";
+    if(d.guild_id){ body += "<div style=\"margin-top:8px;\"><button class=\"btn-close-m\" data-t=\"discord_guild\" data-v=\""+escAttr(String(d.guild_id))+"\" onclick=\"Rho9Intel.openExternal(this.dataset.t,this.dataset.v)\">Show every webhook seen from this server &rarr;</button></div>"; }
+    body += "<div class=\"section-hdr\">Raw JSON</div><div class=\"code-viewer\">"+esc(JSON.stringify(d,null,2))+"</div>";
+    showInfoModal("Webhook Info"+(alive?"":" (dead)"), body);
+    return;
+  }
+  try{
+    var r=await fetch(url,{method:"GET"}); var j=await r.json();
+    showInfoModal("Webhook Info: HTTP "+r.status,"<div class=\"info-kv\">"+infoRow("Status","HTTP "+r.status)+infoRow("ID",j.id||"n/a")+infoRow("Name",j.name||"n/a")+infoRow("Channel",j.channel_id||"n/a")+infoRow("Guild",j.guild_id||"n/a")+infoRow("Type",j.type||"n/a")+"</div><div class=\"section-hdr\">Raw JSON</div><div class=\"code-viewer\">"+esc(JSON.stringify(j,null,2))+"</div><div class=\"intel-note\" style=\"margin-top:8px;\">Tip: connect the local bridge to resolve reliably and log the server/channel for cross-webhook attribution.</div>");
+  }catch(e){
+    showInfoModal("Webhook Info","<div class=\"err-box\">Could not resolve directly (CORS). Connect the local bridge, or run manually:</div><div class=\"code-viewer\">curl \""+esc(url)+"\"</div>");
+  }
+}
 function confirmKill(url){ pendingKillUrl=url; document.getElementById("killModalUrl").textContent=url; document.getElementById("killModal").style.display="flex"; }
 function closeKillModal(){ document.getElementById("killModal").style.display="none"; pendingKillUrl=""; }
 async function executeKill(){ var url=pendingKillUrl; closeKillModal(); showInfoModal("Killing Webhook...","<div class=\"loading-bar\"></div>"); try{ var r=await fetch(url,{method:"DELETE"}); if(r.status===204||r.status===200){ showInfoModal("Webhook Killed","<div class=\"ok-box\">SUCCESS &mdash; HTTP "+r.status+". Webhook invalidated.</div><p style=\"font-size:11px;line-height:1.7;margin-top:8px;\">Document this webhook URL and deletion timestamp in your case report.</p>"); } else { showInfoModal("Kill Result","<div class=\"err-box\">HTTP "+r.status+" &mdash; Already deleted or access denied.</div><div class=\"code-viewer\">curl -X DELETE \""+esc(url)+"\"</div>"); } }catch(e){ showInfoModal("Kill Result","<div class=\"err-box\">CORS blocked. Run from your terminal:</div><div class=\"code-viewer\">curl -X DELETE \""+esc(url)+"\"</div>"); } }
+
+// ---- Fetch a Minecraft archive from a Discord CDN link (via the bridge) ----
+// The browser never touches the CDN directly. The bridge does the download with
+// a strict https + host + extension allowlist and a size cap, sanitises the
+// filename, and streams the bytes back. We re-validate here too (defence in
+// depth) and then push the bytes through the SAME static-analysis pipeline as
+// any dropped file. Nothing is ever executed; archives are parsed as data.
+async function fetchFromDiscord(){
+  var input=document.getElementById("discordUrl");
+  var url=(input&&input.value||"").trim();
+  if(!url){ showInfoModal("Fetch from Discord","<div class=\"err-box\">Paste a Discord CDN link first.</div>"); return; }
+  var host="", path="";
+  try{ var u=new URL(url); if(u.protocol!=="https:") throw 0; host=u.hostname.toLowerCase(); path=(u.pathname||"").toLowerCase(); }
+  catch(e){ showInfoModal("Fetch from Discord","<div class=\"err-box\">That is not a valid https URL.</div>"); return; }
+  var CDN=["cdn.discordapp.com","media.discordapp.net","cdn.discordapp.net"];
+  var EXT=[".zip",".jar",".litemod",".mrpack",".class"];
+  if(CDN.indexOf(host)<0){ showInfoModal("Fetch from Discord","<div class=\"err-box\">Only Discord CDN hosts are allowed:<br>"+esc(CDN.join(", "))+"</div>"); return; }
+  if(!EXT.some(function(x){ return path.endsWith(x); })){ showInfoModal("Fetch from Discord","<div class=\"err-box\">The link must point at one of: "+esc(EXT.join(" "))+"</div>"); return; }
+  if(!(window.Rho9Bridge && Rho9Bridge.discordFetchSupported())){
+    showInfoModal("Fetch from Discord","<div class=\"err-box\">This needs the local decompile bridge. It performs the download (host, extension and size filtered) so your browser never reaches out to the CDN itself.<br><br>Start it with <span class=\"code-viewer\" style=\"display:inline-block;\">python rho9_decompile_server.py</span> and open this page from it.</div>");
+    return;
+  }
+  showInfoModal("Fetching from Discord","<div class=\"loading-bar\"></div><p>Downloading via local bridge (host, extension and size filtered)...</p>");
+  try{
+    var res=await Rho9Bridge.fetchDiscord(url);
+    var safeName=res.name||"discord_download.bin";
+    var file=new File([res.buf], safeName, {type:"application/octet-stream"});
+    closeInfoModal();
+    if(input) input.value="";
+    setStatus("Fetched "+safeName+" from Discord ("+res.buf.byteLength+" bytes). Queued for static analysis.");
+    queueFiles([file]);
+  }catch(e){
+    showInfoModal("Fetch from Discord","<div class=\"err-box\">"+esc(e.message||String(e))+"</div>");
+  }
+}
+
+// ---- Report builder: pre-fills abuse reports for Discord and hosting/registrars ----
+function buildDiscordReport(c){
+  var L=[];
+  L.push("Subject: Malicious Discord webhook used for malware C2 / data exfiltration");
+  L.push("");
+  L.push("Hello Discord Trust & Safety,");
+  L.push("");
+  L.push("I am reporting Discord webhook(s) and/or server(s) being abused as command-and-control and data-exfiltration endpoints by malware distributed as a Minecraft mod.");
+  L.push("");
+  L.push("Sample:");
+  L.push("  Filename: "+c.filename);
+  L.push("  SHA-256:  "+c.sha);
+  L.push("  Static triage: "+c.band+" (score "+c.score+"/100)");
+  if(c.methods.length) L.push("  Observed behaviour: "+c.methods.join(", "));
+  L.push("");
+  if(c.webhooks.length){ L.push("Abused webhook URL(s):"); c.webhooks.forEach(function(w){ L.push("  "+w); }); L.push(""); }
+  if(c.guilds.length){ L.push("Associated server (guild) ID(s):"); c.guilds.forEach(function(g){ L.push("  "+g); }); L.push(""); }
+  L.push("Requested action: invalidate the webhook(s) and review the associated account and server for policy violations (distributing malware, unauthorized access to user data).");
+  L.push("");
+  L.push("Evidence was produced by automated static analysis; no code was executed. I can provide the sample and a full indicator list on request.");
+  L.push("");
+  L.push("Thank you.");
+  return L.join("\n");
+}
+function buildHostingReport(c){
+  var L=[];
+  L.push("Subject: Abuse report - malware command-and-control infrastructure");
+  L.push("");
+  L.push("To the abuse team,");
+  L.push("");
+  L.push("The following host(s) are being used as command-and-control and/or payload-staging infrastructure by malware distributed as a Minecraft mod. Please investigate and act per your acceptable-use policy.");
+  L.push("");
+  L.push("Sample:");
+  L.push("  Filename: "+c.filename);
+  L.push("  SHA-256:  "+c.sha);
+  L.push("  Static triage: "+c.band+" (score "+c.score+"/100)");
+  L.push("");
+  if(c.ips.length){ L.push("IP address(es):"); c.ips.forEach(function(x){ L.push("  "+x); }); L.push(""); }
+  if(c.domains.length){ L.push("Domain(s):"); c.domains.forEach(function(x){ L.push("  "+x); }); L.push(""); }
+  if(c.payloads.length){ L.push("Payload / staging URL(s):"); c.payloads.forEach(function(x){ L.push("  "+x); }); L.push(""); }
+  if(c.telegram.length){ L.push("Telegram C2 endpoint(s):"); c.telegram.forEach(function(x){ L.push("  "+x); }); L.push(""); }
+  L.push("These indicators came from automated static analysis; no code was executed. The sample, timestamps, and a full indicator list are available on request.");
+  L.push("");
+  L.push("Thank you for your time.");
+  return L.join("\n");
+}
+async function showReportBuilder(){
+  if(!S.loadedFiles || !S.loadedFiles.length || Object.keys(S.files).length===0){
+    showInfoModal("Report builder","<div class=\"err-box\">Load and analyse a sample first, then open the report builder.</div>");
+    return;
+  }
+  showInfoModal("Report builder","<div class=\"loading-bar\"></div><p>Collecting indicators...</p>");
+  var iocs=S.iocs||[];
+  function vals(types){ return iocs.filter(function(i){ return types.indexOf(i.type)>=0; }).map(function(i){ return i.value; }); }
+  var ts=threatScore();
+  var band=ts.score>=70?"HIGH THREAT":ts.score>=35?"SUSPICIOUS":"LOW RISK";
+  var parts=[]; for(var i=0;i<S.loadedFiles.length;i++){ if(S.loadedFiles[i].file){ try{ parts.push(new Uint8Array(await S.loadedFiles[i].file.arrayBuffer())); }catch(e){} } }
+  var sha= parts.length? await rho9Sha256(parts) : "(unavailable)";
+  var c={ filename:S.archiveName||"unknown", sha:sha, score:ts.score, band:band,
+    families:(ts.families||[]), methods:deriveAttackMethods(ts),
+    webhooks:vals(["webhook"]), telegram:vals(["telegram_api","telegram_token"]),
+    ips:vals(["ip"]), domains:vals(["domain"]),
+    payloads:vals(["payload_url","url"]), guilds:vals(["discord_guild"]) };
+
+  var discord=buildDiscordReport(c);
+  var hosting=buildHostingReport(c);
+  var abuseTargets=c.ips.concat(c.domains);
+
+  var body="";
+  body+="<div class=\"intel-note\">Pre-filled abuse reports built from this sample's indicators. Edit anything, copy, and file. Nothing is sent from here.</div>";
+
+  body+="<div class=\"rb-block\"><div class=\"rb-head\"><span class=\"rb-title\">Discord report (malicious webhook / server)</span>"+
+        "<button class=\"btn-action\" onclick=\"copyText(document.getElementById('rbDiscord').value,this)\">&#128203; Copy</button></div>"+
+        "<textarea id=\"rbDiscord\" class=\"rb-ta\">"+esc(discord)+"</textarea>"+
+        "<div class=\"rb-links\"><a class=\"rb-link\" href=\"https://dis.gd/report\" target=\"_blank\" rel=\"noopener\">Open Discord report form &rarr;</a>"+
+        "<a class=\"rb-link\" href=\"https://support.discord.com/hc/en-us/requests/new\" target=\"_blank\" rel=\"noopener\">Discord support ticket &rarr;</a></div></div>";
+
+  body+="<div class=\"rb-block\"><div class=\"rb-head\"><span class=\"rb-title\">Hosting / registrar abuse report (C2 IPs and domains)</span>"+
+        "<button class=\"btn-action\" onclick=\"copyText(document.getElementById('rbHosting').value,this)\">&#128203; Copy</button></div>"+
+        "<textarea id=\"rbHosting\" class=\"rb-ta\">"+esc(hosting)+"</textarea>";
+  if(abuseTargets.length){
+    body+="<div class=\"section-hdr\">Find abuse contacts (RDAP via bridge)</div><div class=\"rb-rdap-row\">";
+    abuseTargets.forEach(function(t){
+      body+="<button class=\"btn-micro\" data-t=\""+escAttr(t)+"\" onclick=\"rdapLookup(this.dataset.t,this)\">RDAP: "+esc(t)+"</button>";
+    });
+    body+="</div><div id=\"rbRdapOut\"></div>";
+  }
+  body+="</div>";
+
+  showInfoModal("Report builder", body);
+}
+async function rdapLookup(target, btn){
+  var out=document.getElementById("rbRdapOut");
+  if(btn){ btn.disabled=true; btn.textContent="Looking up "+target+"..."; }
+  var res=null;
+  if(window.Rho9Bridge && Rho9Bridge.abuseContactSupported()) res=await Rho9Bridge.abuseContact(target);
+  if(btn){ btn.disabled=false; btn.textContent="RDAP: "+target; }
+  if(!out) return;
+  if(!res){ out.innerHTML="<div class=\"err-box\">RDAP needs the local bridge (it performs the lookup). Start the bridge and retry.</div>"; return; }
+  if(!res.ok){ out.innerHTML="<div class=\"err-box\">"+esc(res.error||"lookup failed")+"</div>"; return; }
+  var s="<div class=\"ok-box\"><b>"+esc(res.target)+"</b> ("+esc(res.kind)+")";
+  if(res.organization) s+="<br>Org: "+esc(res.organization);
+  if(res.abuse_emails && res.abuse_emails.length) s+="<br>Abuse contact: "+res.abuse_emails.map(esc).join(", ");
+  else s+="<br>No abuse email published in RDAP for this target.";
+  s+="</div>";
+  out.innerHTML=s;
+}
 
 // ---- REPORT (FIX #12: includes decompiled source sigs and IOCs) ----
 function downloadReport(){
@@ -4007,7 +4817,55 @@ async function rho9HandleSessionOnLoad(){
 
 // Initial bridge scan on load, so the pill reflects real status without
 // needing the user to open the settings panel first.
-Rho9Bridge.scan().then(function(){ rho9HandleSessionOnLoad(); });
+Rho9Bridge.scan().then(function(){ rho9HandleSessionOnLoad(); if(window.Rho9Intel) Rho9Intel.refreshBadge(); });
+
+// ---- Sparse Rho-9 shop promo ----
+// Deliberately low-frequency so it is never pesky: at most one eligible roll per
+// 24h per browser, and only a fraction of those actually show. Fully dismissible
+// with a persistent "don't show again". Linux users are shown the IP OSINT tool;
+// everyone else gets the URL Redirect Tracer. All content is static and operator
+// owned (Rho-9's own shop), so nothing here is user-controlled.
+(function rho9ShopAd(){
+  var NEVER="rho9_ad_never", LAST="rho9_ad_last";
+  var COOLDOWN_MS=24*60*60*1000, SHOW_PROB=0.33, DELAY_MS=25000;
+  var COLLECTION="https://shop.rho-9.com/en-usd/collections/software-and-tools";
+  var P_TRACER="https://shop.rho-9.com/en-usd/products/rho-9-url-redirect-tracer-linux-windows";
+  var P_OSINT="https://shop.rho-9.com/en-usd/products/ip-osint-tool";
+  try{ if(localStorage.getItem(NEVER)==="1") return; }catch(e){ return; }
+  var last=0; try{ last=parseInt(localStorage.getItem(LAST)||"0",10)||0; }catch(e){}
+  var now=Date.now();
+  if(now-last < COOLDOWN_MS) return;                 // seen the ad (or rolled) recently
+  try{ localStorage.setItem(LAST, String(now)); }catch(e){}
+  if(Math.random() >= SHOW_PROB) return;             // sparse: only some eligible loads show it
+  var isLinux=false;
+  try{
+    var ua=(navigator.userAgent||"")+" "+(navigator.platform||"");
+    isLinux=/linux|x11|ubuntu|debian|fedora/i.test(ua) && !/android/i.test(ua);
+  }catch(e){}
+  var prod = isLinux
+    ? { url:P_OSINT, name:"IP OSINT Tool", pitch:"Map an IP to its network, geolocation and abuse contacts fast. Handy the moment you pull a C2 address out of a mod." }
+    : { url:P_TRACER, name:"URL Redirect Tracer (Linux/Windows)", pitch:"Follow a suspicious short link or staging URL through every hop before you ever open it." };
+  function build(){
+    if(document.getElementById("rho9AdCard")) return;
+    var disc=document.getElementById("discModal");            // never stack on the mandatory notice
+    if(disc && (disc.classList.contains("show") || disc.style.display==="flex")) return;
+    var card=document.createElement("div");
+    card.id="rho9AdCard"; card.className="rho9-ad";
+    card.innerHTML=
+      "<button class=\"rho9-ad-x\" aria-label=\"Dismiss\" onclick=\"var c=document.getElementById('rho9AdCard'); if(c) c.remove();\">&#10005;</button>"+
+      "<div class=\"rho9-ad-kicker\">From the Rho-9 shop</div>"+
+      "<div class=\"rho9-ad-name\">"+prod.name+"</div>"+
+      "<div class=\"rho9-ad-pitch\">"+prod.pitch+"</div>"+
+      "<div class=\"rho9-ad-actions\">"+
+        "<a class=\"rho9-ad-btn\" href=\""+prod.url+"\" target=\"_blank\" rel=\"noopener\">View tool</a>"+
+        "<a class=\"rho9-ad-link\" href=\""+COLLECTION+"\" target=\"_blank\" rel=\"noopener\">All tools</a>"+
+      "</div>"+
+      "<button class=\"rho9-ad-never\" onclick=\"try{localStorage.setItem('"+NEVER+"','1');}catch(e){} var c=document.getElementById('rho9AdCard'); if(c) c.remove();\">Don't show again</button>";
+    document.body.appendChild(card);
+    requestAnimationFrame(function(){ card.classList.add("show"); });
+  }
+  setTimeout(build, DELAY_MS);
+})();
 </script>
 </body>
 </html>
