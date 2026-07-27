@@ -3408,8 +3408,20 @@ function threatScore(){
   if(remoteExec.length && canLoad){
     add(25, "remote executable fetched by loader code", true);
   }
+  // v3.1.1: an insecure (cleartext HTTP) download of a remote executable/archive
+  // is forced to the top severity on its own, regardless of what else is present.
+  // Intent is indeterminate: it may be a benign self-updater, or a hijacked / MITM'd
+  // endpoint now serving a malicious jar in place of the intended file. Cleartext
+  // delivery is a common malware distribution channel, and once the transport is
+  // insecure there is no way to know which of those two cases this is. Either way
+  // the download itself is the hazard, so it is treated as a hard, non-cappable,
+  // SEVERE indicator rather than the small modifier it used to be (+5).
   var cleartext = remoteExec.filter(function(i){ return i.value.toLowerCase().indexOf("http://")===0; });
-  if(cleartext.length) add(5, "remote code fetched over cleartext HTTP", false);
+  var insecureDownload = cleartext.length > 0;
+  if(insecureDownload){
+    add(100, cleartext.length+" insecure (cleartext HTTP) download"+(cleartext.length>1?"s":"")+
+             " of a remote executable/archive; indeterminate intent, forced to SEVERE", true);
+  }
 
   // ---- Tier 4: obfuscation and structural modifiers ----
   var hasXor = classes.some(function(c){ return c.xorKey!==null&&c.xorKey!==undefined; });
@@ -3453,8 +3465,13 @@ function threatScore(){
   score = Math.round(score);
   if(!hard && score >= 70){ score = 69; capped = true; reasons.push("capability only, no corroborating indicator"); }
 
+  // v3.1.1: an insecure download is a hard indicator on its own and can never be
+  // capped or softened below SEVERE. This runs AFTER the corroboration gate so it
+  // overrides it: pin the score to the top of the band and clear any cap.
+  if(insecureDownload){ score = 100; capped = false; hard = true; }
+
   score = Math.min(100, Math.max(0, score));
-  return {score:score, reasons:reasons, evidence:evidence, hard:hard, capped:capped, families:sigFams};
+  return {score:score, reasons:reasons, evidence:evidence, hard:hard, capped:capped, families:sigFams, insecureDownload:insecureDownload};
 }
 
 // v3.1.0: informational capability families, gathered for display only.
