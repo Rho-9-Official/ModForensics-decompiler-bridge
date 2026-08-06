@@ -6,7 +6,7 @@ serves the app itself, and keeps a persistent, cross-session threat-intel store
 so repeat attacker infrastructure is recognised over time. Works the same on
 Windows, Linux, macOS, and Termux.
 
-Server version: **1.1.0**. Scanner it serves: **ModForensics v3.1.1**.
+Server version: **1.1.0**. Scanner it serves: **ModForensics v3.4.0**.
 
 > This README is generated from the current server source
 > (`rho9_decompile_server.py`), not from an earlier release. If the code and this
