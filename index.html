@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ModForensics v3.4.0 - Rho-9 Systems</title>
+<title>ModForensics v3.5.1 - Rho-9 Systems</title>
 <!-- JSZip v3.10.1 (MIT / GPLv3, https://stuk.github.io/jszip) inlined so the
      tool is fully functional offline from first load, with no CDN dependency. -->
 <script>
@@ -33,7 +33,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 </style>
 <style>
 /* ============================================================================
-   ModForensics v3.4.0 — Rho-9 Systems
+   ModForensics v3.5.1 — Rho-9 Systems
    UI: reNgine dark theme (Velzon vertical layout, data-bs-theme="dark").
    Dark sidebar, dark topbar, dark canvas, dark elevated cards, soft-tint
    badges. reNgine's indigo is replaced with the Rho-9 cyan and magenta.
@@ -871,6 +871,51 @@ textarea.deob-ta:focus{border-color:var(--brand);}
   font-size:10px;cursor:pointer;padding:0;text-decoration:underline;font-family:var(--sans);}
 .rho9-ad-never:hover{color:var(--text2);}
 @media print{ .rho9-ad{display:none!important;} }
+
+/* ---- Fuzzy Match panel (v3.5.0) ------------------------------------------
+   Scoped to #tp-fuzzy so nothing here can affect the rest of the app. The
+   matches table is five columns wide, which does not fit a phone, so below
+   760px it stops behaving as a table and becomes stacked label/value rows
+   driven by the data-l attribute on each cell.                            */
+.fz-pill{display:inline-block;padding:2px 9px;border-radius:20px;border:1px solid var(--bd);
+  font-size:11px;font-family:var(--mono);white-space:nowrap;max-width:100%;overflow-wrap:anywhere;}
+/* .card carries no horizontal padding of its own: the app's own markup pairs
+   it with .card-header and .card-body, and this panel builds cards directly.
+   Without this, content sat flush against the border and looked clipped. */
+#tp-fuzzy .card{padding:14px 16px;}
+#tp-fuzzy .card > .card-title{margin-bottom:9px;}
+#tp-fuzzy .info-row{gap:12px;min-width:0;}
+#tp-fuzzy .info-key,#tp-fuzzy .info-val{min-width:0;overflow-wrap:anywhere;}
+#tp-fuzzy textarea,#tp-fuzzy input{box-sizing:border-box;max-width:100%;}
+.fz-btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;}
+.fz-flag{display:inline-block;width:48%;font-size:12px;cursor:pointer;padding:3px 0;
+  overflow-wrap:anywhere;}
+#tp-fuzzy .ev-table{table-layout:auto;}
+#tp-fuzzy .ev-table td{overflow-wrap:anywhere;}
+
+@media (max-width:760px){
+  .fz-flag{width:100%;}
+  #tp-fuzzy .card{padding:12px;}
+  /* Stack key over value rather than squeezing a fixed-width label against a
+     right-aligned number. A phone has no room for two columns, and forcing
+     them produced cramped rows with values jammed into the border. */
+  #tp-fuzzy .info-row{flex-direction:column;align-items:flex-start;gap:2px;
+    padding:7px 0;}
+  #tp-fuzzy .info-key{flex:none;min-width:0;font-size:11px;letter-spacing:.3px;
+    text-transform:uppercase;color:var(--text2);}
+  #tp-fuzzy .info-val{flex:none;width:100%;text-align:left;}
+  #tp-fuzzy .ev-table thead{display:none;}
+  #tp-fuzzy .ev-table tr{display:block;border-bottom:1px solid var(--bd);padding:6px 0;}
+  #tp-fuzzy .ev-table tr:last-child{border-bottom:none;}
+  #tp-fuzzy .ev-table td{display:flex;justify-content:space-between;gap:12px;
+    padding:4px 12px;border-bottom:none;text-align:right;}
+  #tp-fuzzy .ev-table td[data-l]::before{content:attr(data-l);color:var(--text2);
+    font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+    text-align:left;flex:0 0 auto;}
+  #tp-fuzzy .ev-table td[colspan]{display:block;text-align:left;}
+  #tp-fuzzy .fz-btnrow .btn-action,#tp-fuzzy .fz-btnrow .btn-micro{flex:1 1 auto;}
+  #tp-fuzzy textarea{font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -926,6 +971,7 @@ textarea.deob-ta:focus{border-color:var(--brand);}
       <div class="menu-title">Threat Intel</div>
       <button class="tab-btn" id="tb-intel"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-fingerprint-line"></use></svg></span><span class="tab-lbl">Intel DB</span><span class="badge">0</span></button>
       <button class="tab-btn" id="tb-trends"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-bar-chart-box-line"></use></svg></span><span class="tab-lbl">Trends</span><span class="badge"></span></button>
+      <button class="tab-btn" id="tb-fuzzy"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-shield-check-line"></use></svg></span><span class="tab-lbl">Fuzzy Match</span><span class="badge">0</span></button>
 
       <div class="menu-title">Tools</div>
       <button class="tab-btn" id="tb-deob"><span class="tab-icon"><svg class="ri-ic" aria-hidden="true"><use href="#ri-key-2-line"></use></svg></span><span class="tab-lbl">Deobfuscator</span><span class="badge"></span></button>
@@ -979,10 +1025,11 @@ textarea.deob-ta:focus{border-color:var(--brand);}
 
       <div id="welcomeScreen">
         <img class="logo-img" alt="">
-        <div class="welcome-title">ModForensics v3.4.0</div>
+        <div class="welcome-title">ModForensics v3.5.1</div>
         <div class="welcome-sub">Load a <strong>.zip</strong> (decompiled jar from decompiler.com, or password-protected — see below), <strong>.litemod</strong>, <strong>.mrpack</strong>, or <strong>.class</strong> file.<br>
         <strong>.jar</strong> works too if the local decompile bridge is running and connected (see the BRIDGE pill above), otherwise decompile first at <a href="https://www.decompiler.com" target="_blank">decompiler.com</a> and load the resulting .zip.<br><br>
         Full code viewer &middot; strings &middot; indicators &middot; flagged files &middot; class refs &middot; mixin targets &middot; webhook kill.
+        <span class="rel-note n-new"><b>New in v3.5.0:</b> <b>Fuzzy matching</b> replaces rule scanning, in the new Fuzzy Match tab. Samples are fingerprinted by what the bytecode does (opcode streams and external API surface) rather than what it looks like, so a repacked, renamed, recompiled variant still matches something you have already seen. Tested on a real corpus: it linked two malware families across a package rename and across a full recompile where not one class file was byte-identical, in about 100ms and without decompiling. Embedded jars are fingerprinted as their own layers, so a payload hidden inside a Fabric jar-in-jar or a CurseForge pack is matched on its own merits, while shared libraries are excluded so bundling commons-logging is not mistaken for shared authorship. Samples file into three sets: goodware, badware (insecure rather than malicious) and malware, with premade flags covering every family the analyser already detects. Generating a hash produces a compact JSON file carrying the fingerprint, a compact flag code and an optional fuzzy hash of the JSON report, so detection can be shared without sharing an executable.</span>
         <span class="rel-note n-new"><b>New in v3.4.0:</b> Deep Decode (opt-in, see the pill in the topbar) &mdash; a purpose-built, hermetically sandboxed interpreter for small static decode methods, for when a sample's obfuscation doesn't match any existing pattern matcher. Rather than recognizing a cipher's shape, it runs the candidate method's actual logic (arithmetic/array/branch opcodes and String/StringBuilder construction only &mdash; no network, filesystem, reflection, or real Java API access; fail-closed on anything else). Verified against a live custom cipher: independently decoded the same 10 strings the hand-built matcher found, then &mdash; with zero cipher-specific code &mdash; also decoded 291 strings out of an unrelated sample's unrelated XOR scheme. Existing matchers (fragmented-string, keyed-XOR, pixel-cipher) keep running regardless; this is a fallback layer, not a replacement.</span>
         <span class="rel-note n-new"><b>Also new in v3.4.0:</b> password-protected zip support, both legacy ZipCrypto and WinZip AES (PBKDF2-HMAC-SHA1 + AES-CTR) &mdash; the two schemes sample-sharing sources actually use. Prefilled with the MalwareBazaar convention (<code>infected</code>) but editable. Verified byte-perfect against a real encrypted sample: the recovered jar's SHA256 matched its own filename exactly.</span>
         <span class="rel-note n-fix"><b>Fixed in v3.4.0 (critical):</b> every obfuscation-defeat decoder (keyed-XOR, pixel-cipher, fragmented-string) only ever ran against raw bytecode &mdash; which a bare .jar dropped through the bridge never touched, since bridge decompilation produces Java source text and that path never called the bytecode parser at all. The primary, most common workflow was silently getting zero benefit from any of these decoders. Fixed by also running a structural bytecode pass against the original compiled classes alongside the decompiled source. A real sample went from 22/LOW RISK to 77/HIGH THREAT once this was corrected.</span>
@@ -1004,6 +1051,7 @@ textarea.deob-ta:focus{border-color:var(--brand);}
         <div class="tab-panel" id="tp-mixins"></div>
         <div class="tab-panel" id="tp-intel"></div>
         <div class="tab-panel" id="tp-trends"></div>
+        <div class="tab-panel" id="tp-fuzzy"></div>
         <div class="tab-panel" id="tp-deob">
           <div style="flex:1;min-height:0;display:flex;gap:0;flex-direction:column;">
             <div class="deob-picker-wrap">
@@ -1059,7 +1107,7 @@ textarea.deob-ta:focus{border-color:var(--brand);}
     </div><!-- /.page-content -->
 
     <footer class="footer">
-      <span>ModForensics v3.4.0 &middot; Rho-9 Systems &middot; <a href="https://modforensics.rho-9.com" target="_blank">modforensics.rho-9.com</a></span>
+      <span>ModForensics v3.5.1 &middot; Rho-9 Systems &middot; <a href="https://modforensics.rho-9.com" target="_blank">modforensics.rho-9.com</a></span>
       <span>Static analysis only. No submitted code is executed. The score is a triage indicator, not a verdict.</span>
     </footer>
   </div><!-- /.main-content -->
@@ -1159,7 +1207,7 @@ textarea.deob-ta:focus{border-color:var(--brand);}
     <div class="disc-head">
       <div class="disc-kicker">&#9888; Mandatory notice &middot; Please read before submitting a file</div>
       <div class="disc-title" id="discTitle">How to interpret a ModForensics result</div>
-      <div class="disc-sub">ModForensics v3.4.0 &middot; Rho-9 Systems &middot; Static analysis platform</div>
+      <div class="disc-sub">ModForensics v3.5.1 &middot; Rho-9 Systems &middot; Static analysis platform</div>
     </div>
 
     <div class="disc-body">
@@ -1889,7 +1937,8 @@ function sanitizeForIOC(t){
 
 // ---- STATE ----
 // FIX #3: iocs always array, never object
-var S = { files:{}, classes:{}, iocs:[], archiveName:null, activeFile:null, loadedFiles:[], deepDecodeEnabled:false };
+var S = { files:{}, classes:{}, iocs:[], archiveName:null, activeFile:null, loadedFiles:[], deepDecodeEnabled:false,
+          fuzzy:null, lastSampleBytes:null, lastJobId:null, archivePassword:null };
 var pendingKillUrl = "";
 var activeTab = "overview";
 
@@ -1907,6 +1956,7 @@ var TAB_META = {
   mixins:  {t:"Mixin targets", c:"Mixins"},
   intel:   {t:"Threat intelligence", c:"Intel DB"},
   trends:  {t:"Intel trends", c:"Trends"},
+  fuzzy:   {t:"Fuzzy matching", c:"Fuzzy Match"},
   deob:    {t:"Deobfuscation workbench", c:"Deobfuscator"}
 };
 function switchTab(name) {
@@ -1920,6 +1970,7 @@ function switchTab(name) {
   if(tb) tb.classList.add("active");
   if(tp) tp.classList.add("active");
   if((name==="intel"||name==="trends") && window.Rho9Intel) Rho9Intel.onShow(name);
+  if(name==="fuzzy" && window.Rho9Fuzzy) Rho9Fuzzy.onShow();
   var meta = TAB_META[name];
   if(meta){
     var pt = document.getElementById("pageTitle"); if(pt) pt.textContent = meta.t;
@@ -1987,16 +2038,33 @@ var Rho9Bridge = (function(){
   }
 
   function scan(){
-    if(state.scanning) return Promise.resolve(state.url);
+    // Return the IN-FLIGHT probe to a concurrent caller instead of a
+    // resolved promise. The old guard handed back Promise.resolve(state.url)
+    // with state.url still null, so whichever caller lost the race believed
+    // there was no bridge. That is why a refresh never offered to restore the
+    // session until you reloaded a second time: the restore check ran, saw a
+    // null url, and returned.
+    if(state.scanning && state.scanPromise) return state.scanPromise;
     state.scanning = true;
-    return Promise.all(RHO9_BRIDGE_PORTS.map(probeOne)).then(function(results){
+    state.scanPromise = Promise.all(RHO9_BRIDGE_PORTS.map(probeOne)).then(function(results){
       var hit = results.filter(function(r){ return r; })[0];
+      var wasFound = !!state.url;
       if(hit){ state.url = "http://127.0.0.1:"+hit.port; state.caps = hit.caps; }
       else { state.url = null; state.caps = null; }
       state.scanning = false;
+      state.scanPromise = null;
       updatePill();
+      // Let the rest of the app react to the bridge appearing after load.
+      if(!wasFound && state.url){
+        try{ window.dispatchEvent(new CustomEvent("rho9-bridge-online")); }catch(e){}
+      }
       return state.url;
+    }, function(err){
+      state.scanning = false; state.scanPromise = null;
+      updatePill();
+      return null;
     });
+    return state.scanPromise;
   }
 
   function updatePill(){
@@ -2014,6 +2082,7 @@ var Rho9Bridge = (function(){
     }
   }
 
+  function getUrl(){ return state.url; }
   function isReady(){ return !!(state.url && state.caps && state.caps.ready); }
   function isFound(){ return !!state.url; }
   function getCaps(){ return state.caps; }
@@ -2035,6 +2104,20 @@ var Rho9Bridge = (function(){
       try{ var j=await resp.json(); if(j&&j.error) msg=j.error; }catch(e){}
       throw new Error(msg);
     }
+    // v3.5.0: keep the job id. The bridge already holds this sample, so a
+    // later call can reference it instead of re-uploading the whole file.
+    try{ S.lastJobId = resp.headers.get("X-Rho9-Job-Id") || null; }catch(e){ S.lastJobId = null; }
+    // v3.5.0: the bridge holds back oversized classfiles before decompiling
+    // (a 1.93MB class is a decompiler-hang vector, the same trick as a
+    // decompression bomb one layer down). Reuse the existing bomb-flag
+    // channel so those entries surface in the report like any other.
+    try{
+      var skippedCount = parseInt(resp.headers.get("X-Rho9-Skipped-Entries")||"0", 10);
+      if(skippedCount > 0){
+        S.bridgeSkipped = skippedCount;
+        S.zipBombFlags = S.zipBombFlags || [];
+      }
+    }catch(e){}
     return await resp.arrayBuffer();
   }
 
@@ -2142,7 +2225,7 @@ var Rho9Bridge = (function(){
   }
 
   return {
-    scan:scan, isReady:isReady, isFound:isFound, getCaps:getCaps,
+    scan:scan, isReady:isReady, isFound:isFound, getCaps:getCaps, getUrl:getUrl,
     decompileToZip:decompileToZip,
     saveSession:saveSession, fetchSession:fetchSession, clearSession:clearSession,
     logIntel:logIntel, intelGet:intelGet, intelSupported:intelSupported,
@@ -2792,7 +2875,9 @@ function parseClass(buf) {
     fragmentCallSites:[], cleanupRegexes:{}, fragmentDecoded:null,
     keyedXorMethods:{}, keyedXorCallSites:[], keyedXorDecoded:null,
     pixelCipherMethods:{}, pixelCipherCallSites:[], pixelCipherDecoded:null,
-    deepDecodeMethods:{}, deepDecodeMethodInstrs:[], deepDecodeCallSites:[], deepDecodeDecoded:null
+    deepDecodeMethods:{}, deepDecodeMethodInstrs:[], deepDecodeCallSites:[], deepDecodeDecoded:null,
+    mfxPending:[], mfxHelpers:{names:{},strips:[]}, mfxDecoded:null, mfxJoined:null, mfxDeadRanges:0,
+    mfxLiveCp:{}, mfxDeadCp:{}, decoyStrings:[]
   };
   try {
     if(r4()!==0xCAFEBABE){ res.error="Not a .class file (bad magic)"; return res; }
@@ -3033,7 +3118,70 @@ function parseClass(buf) {
       }
       var ddSites = findDeepDecodeCallSites(instrs2, cp);
       if(ddSites.length) res.deepDecodeCallSites = res.deepDecodeCallSites.concat(ddSites);
+
+      // MFX: retain the disassembly for the adaptive pass. Scanning cannot run
+      // here because splice-helper discovery is corpus-wide (helpers are
+      // declared in one class and called from another), so the actual scan
+      // happens in resolveMfxSites once every class is parsed.
+      res.mfxPending.push({method:md2.name, instrs:instrs2});
+
+      // Decoy accounting. The obfuscator packs unreachable branches with fake
+      // hex, fake base64 and fake hashes purely to poison analysis. Record
+      // which string constants are actually reachable so the ones that exist
+      // only inside dead code can be dropped before they reach extractIOCs or
+      // scanSigs. Without this a decoy in `if (HashMap.class == null)` is
+      // reported as a real indicator.
+      try {
+        var mfxDeadPc = mfxDeadOffsets(instrs2, cp);
+        for(var di=0; di<instrs2.length; di++){
+          var dLit = mfxLdcString(instrs2[di], cp);
+          if(!dLit) continue;
+          if(mfxIsDead(mfxDeadPc, instrs2[di].off)) res.mfxDeadCp[dLit.cpIndex] = true;
+          else res.mfxLiveCp[dLit.cpIndex] = true;
+        }
+      } catch(e){ /* accounting only, never block parsing */ }
+      if(/^\(\[Ljava\/lang\/String;\)Ljava\/lang\/String;$/.test(md2.desc||'')){
+        var sawReplaceAll=false, pendingStrip=null;
+        for(var mi=0;mi<instrs2.length;mi++){
+          var mlit = mfxLdcString(instrs2[mi], cp);
+          if(mlit) pendingStrip = mlit.value;
+          if(instrs2[mi].name==='invokevirtual' && (instrs2[mi].comment||'').indexOf('.replaceAll')>=0){
+            sawReplaceAll=true;
+            if(pendingStrip && res.mfxHelpers.strips.indexOf(pendingStrip)<0) res.mfxHelpers.strips.push(pendingStrip);
+          }
+        }
+        if(sawReplaceAll) res.mfxHelpers.names[md2.name]=true;
+      }
     }
+
+    // Drop string constants that exist ONLY inside unreachable code.
+    //
+    // These are pure analysis poison: 198-Macro carries 214 of them across its
+    // injected classes, and one ("17ufxNtL79Yw6ZEm5ABnu1ixgkzgSSk", sitting in
+    // an `if (HashMap.class == null)` block) matched the Bitcoin address rule
+    // and put a fabricated "crypto wallet address" in the report verdict.
+    //
+    // A constant referenced from live code anywhere is kept, even if it also
+    // appears in a dead branch, so this can only remove genuinely unreachable
+    // data.
+    try {
+      var decoySet = {};
+      for(var dcp in res.mfxDeadCp){
+        if(res.mfxLiveCp[dcp]) continue;
+        var de = cp[dcp];
+        if(!de || de.t !== 8) continue;
+        var dv = gs(de.si);
+        if(dv) decoySet[dv] = true;
+      }
+      if(Object.keys(decoySet).length){
+        var kept = [];
+        for(var si=0; si<res.strings.length; si++){
+          if(decoySet[res.strings[si]]) res.decoyStrings.push(res.strings[si]);
+          else kept.push(res.strings[si]);
+        }
+        res.strings = kept;
+      }
+    } catch(e){ /* leave strings untouched on any failure */ }
 
     // Parse class-level attributes (SourceFile, Deprecated, etc.)
     // Per JVM spec §4.7 — same attributes javap -v reads
@@ -3477,6 +3625,1099 @@ function resolveFragmentedStringCalls(){
 // (execute arbitrary small decode methods rather than pattern-match specific
 // shapes) is still the better long-term answer and would make this whole
 // narrow matcher unnecessary.
+// ===========================================================================
+// MFX -- adaptive string-deobfuscation engine (2026-08)
+// ---------------------------------------------------------------------------
+// Added alongside the existing narrow matchers rather than replacing them.
+// isKeyedXorDecodeMethod / findKeyedXorCallSites / decodePixelCipher and the
+// deep-decode interpreter all still run and still push their own IOCs; MFX is
+// a parallel pass whose results are deduplicated against theirs downstream.
+//
+// It exists because the 198-Macro sample (Aoba Client 1.4.5 repack, injected
+// com.github.ta_le entrypoint) defeated every existing decoder at once:
+//
+//   1. The XOR loop is INLINED at all 115 call sites. There is no helper
+//      method, so isKeyedXorDecodeMethod's ([BI)Ljava/lang/String; descriptor
+//      filter can never fire.
+//   2. The key is embedded in the literal itself (length in ch[0], key in
+//      ch[1..k], ciphertext after), so there is no key argument to read.
+//   3. Two carrier forms are mixed inside one method: "...".toCharArray() and
+//      "...".getBytes("ISO-8859-1"). Latin-1 is chosen precisely because it
+//      round-trips bytes 0x00-0xFF unchanged, so both yield the same buffer.
+//      Matching only one form loses roughly two thirds of the literals.
+//   4. Fragments are never concatenated syntactically. Each is decoded by its
+//      own loop and pushed into a StringBuilder, so no adjacency rule
+//      reassembles them -- the payload stays as "https://polygo" + "n-rpc.com"
+//      and whole-URL regexes never fire.
+//   5. Roughly 19% of the source is unreachable branches (if (0L != 0L),
+//      if (String.class == null), if (77 - 77 != 0)) packed with decoy hex and
+//      decoy base64, which pollute the IOC set if extracted.
+//   6. Splice helpers are declared in one class and called from another, so
+//      per-file helper discovery finds zero of them.
+//
+// Both input paths are supported and produce the same indicators: raw .class
+// bytecode, and decompiled Java source from the bridge. They normalise to one
+// record shape before any shared logic runs:
+//
+//   Site { family, value, order, scope, sink, adjacentToPrev }
+//
+// so reassembly, joining, pruning and IOC extraction are written exactly once.
+// ===========================================================================
+
+// --- Acceptance strictness -------------------------------------------------
+// The single dial worth tuning. Schemes actually OBSERVED in real samples are
+// accepted on printability alone. Speculative schemes -- variants these
+// obfuscator families plausibly move to next, but which are not in any sample
+// we hold -- must additionally produce something semantically meaningful
+// (a URL, a path, a class name, a JSON key, a known API token) before MFX will
+// believe them.
+//
+// This is deliberately conservative: a permissive scheme registry plus a
+// printability score WILL occasionally "decode" innocent constants in
+// legitimate mods, and a false webhook in a scan report costs more trust than
+// a missed string costs coverage. Raise MFX_SPECULATIVE_MIN_PRINTABLE or drop
+// MFX_REQUIRE_SEMANTIC_FOR_SPECULATIVE to trade the other way.
+var MFX_OBSERVED_MIN_PRINTABLE = 0.85;
+var MFX_SPECULATIVE_MIN_PRINTABLE = 0.92;
+var MFX_REQUIRE_SEMANTIC_FOR_SPECULATIVE = true;
+var MFX_MIN_LEN = 4;
+var MFX_MAX_LEN = 8192;
+
+// Semantic evidence for speculative schemes. Cheap, anchored, no backtracking.
+var MFX_RE_SEMANTIC = /(?:https?:\/\/|\bwww\.|[A-Za-z][\w$]*(?:\.[A-Za-z][\w$]*){2,}|["']\w+["']\s*:|\/[a-z][\w.-]{2,}\/|\\[A-Za-z][\w ]{2,}\\|\b(?:token|auth|api|key|url|host|user|pass|cookie|session|webhook|exec|cmd|http)\b)/i;
+
+// ---------------------------------------------------------------------------
+// Byte-level helpers. Everything hot works on Uint8Array and never builds an
+// intermediate string, because the registry runs several candidate schemes
+// against every constant in every method of every class.
+// ---------------------------------------------------------------------------
+
+function mfxScorePrintable(buf, len, bail){
+  // Single pass, early bail. Returns the printable ratio, or -1 once it is
+  // arithmetically impossible to reach `bail` so callers stop paying for the
+  // rest of the buffer.
+  var good = 0, i = 0;
+  var need = bail ? Math.ceil(bail * len) : 0;
+  for(i=0;i<len;i++){
+    var b = buf[i];
+    if((b >= 0x20 && b <= 0x7e) || b === 9 || b === 10 || b === 13 || (b >= 0xc2 && b <= 0xf4)) good++;
+    else if(need && (good + (len - i - 1)) < need) return -1;
+  }
+  return len ? good / len : 0;
+}
+
+function mfxToString(buf, len){
+  // Chunked so a long buffer does not blow the argument limit, and so we are
+  // not doing string += in a per-byte loop.
+  var parts = [], i = 0;
+  while(i < len){
+    var end = Math.min(i + 4096, len);
+    parts.push(String.fromCharCode.apply(null, buf.subarray(i, end)));
+    i = end;
+  }
+  var s = parts.join('');
+  try {
+    if(typeof TextDecoder === 'function'){
+      var u = new TextDecoder('utf-8', {fatal:false}).decode(buf.subarray(0, len));
+      if(u && u.indexOf('\uFFFD') < 0) return u;
+    }
+  } catch(e){ /* fall through to latin-1 */ }
+  return s;
+}
+
+// ---------------------------------------------------------------------------
+// Scheme registry.
+//
+// Each entry decodes IN PLACE into a shared scratch buffer and returns the
+// written length, or -1 to decline. `observed:true` marks a scheme confirmed
+// against a real sample; everything else is speculative and must clear the
+// semantic bar above.
+//
+// Ordering matters: cheapest and most-confirmed first, and the solver stops on
+// the first confident hit rather than scoring the whole registry.
+// ---------------------------------------------------------------------------
+
+var MFX_SCRATCH = new Uint8Array(MFX_MAX_LEN);
+
+var MFX_SCHEMES = [
+  {
+    id: 'header-key-head',
+    observed: true,
+    // ch[0] = key length, ch[1..k] = key, remainder = ciphertext.
+    // This is 198-Macro's scheme, and the reason it needs no key argument.
+    run: function(src, n, out){
+      if(n < 3) return -1;
+      var k = src[0];
+      if(k <= 0 || k >= n - 1) return -1;
+      var m = n - 1 - k;
+      if(m < MFX_MIN_LEN) return -1;
+      for(var i=0;i<m;i++) out[i] = src[1 + k + i] ^ src[1 + (i % k)];
+      return m;
+    }
+  },
+  {
+    id: 'header-key-tail',
+    observed: false,
+    // Same layout mirrored: key length in the last byte, key immediately
+    // before it, ciphertext from offset 0.
+    run: function(src, n, out){
+      if(n < 3) return -1;
+      var k = src[n-1];
+      if(k <= 0 || k >= n - 1) return -1;
+      var m = n - 1 - k;
+      if(m < MFX_MIN_LEN) return -1;
+      var keyOff = m;
+      for(var i=0;i<m;i++) out[i] = src[i] ^ src[keyOff + (i % k)];
+      return m;
+    }
+  },
+  {
+    id: 'fixed-key',
+    observed: true,
+    // Single byte key supplied by the call site. This is the shape the
+    // existing keyed-XOR matcher already handles; kept here so the solver can
+    // also recover it when the helper call is inlined away.
+    needsKey: true,
+    run: function(src, n, out, key){
+      if(n < MFX_MIN_LEN) return -1;
+      var k = key & 0xFF;
+      for(var i=0;i<n;i++) out[i] = src[i] ^ k;
+      return n;
+    }
+  },
+  {
+    id: 'length-derived-key',
+    observed: false,
+    // No key material stored at all; the key is a function of the buffer
+    // length. Seen in the wild in other Java crypters as a way to defeat
+    // key-hunting entirely.
+    run: function(src, n, out){
+      if(n < MFX_MIN_LEN) return -1;
+      var k = (n * 31 + 7) & 0xFF;
+      if(k === 0) return -1;
+      for(var i=0;i<n;i++) out[i] = src[i] ^ k;
+      return n;
+    }
+  },
+  {
+    id: 'positional-key',
+    observed: false,
+    // plain[i] = ct[i] ^ ((seed + i*step) & 0xFF). Defeats any fixed-key
+    // bruteforce because no single byte works across the buffer.
+    // seed/step are recovered by the solver, not stored.
+    variable: true,
+    run: function(src, n, out, seed, step){
+      if(n < MFX_MIN_LEN) return -1;
+      for(var i=0;i<n;i++) out[i] = src[i] ^ ((seed + i * step) & 0xFF);
+      return n;
+    }
+  },
+  {
+    id: 'chained-prev',
+    observed: false,
+    // Rolling: each byte XORs against the previous CIPHERTEXT byte, first
+    // against a seed. Self-synchronising, so a wrong seed corrupts only the
+    // first byte, which is exactly why it needs the semantic bar.
+    variable: true,
+    run: function(src, n, out, seed){
+      if(n < MFX_MIN_LEN) return -1;
+      out[0] = src[0] ^ (seed & 0xFF);
+      for(var i=1;i<n;i++) out[i] = src[i] ^ src[i-1];
+      return n;
+    }
+  }
+];
+
+// Decoded-result cache. The same constant is frequently referenced from many
+// methods, and across the corpus roughly a third of constants repeat, so this
+// removes a large amount of duplicate solving.
+var MFX_CACHE = Object.create(null);
+var MFX_CACHE_HITS = 0, MFX_CACHE_MISSES = 0;
+
+function mfxCacheKey(src, n, key){
+  // FNV-1a over the buffer. Cheaper than building a string key and adequate
+  // for a within-scan memo, where a collision costs a redundant decode rather
+  // than a wrong answer (we re-verify on hit).
+  var h = 0x811c9dc5;
+  for(var i=0;i<n;i++){
+    h ^= src[i];
+    h = (h + ((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24))) >>> 0;
+  }
+  return h.toString(36) + ':' + n + ':' + (key === undefined ? '' : key);
+}
+
+/**
+ * Adaptive solver. Runs the registry in order and returns the first result
+ * that clears its scheme's acceptance bar, or the best-scoring one if none is
+ * confident. Returns null when nothing is believable.
+ *
+ * opts.key      -- known single-byte key from a call site, if any
+ * opts.observedOnly -- restrict to confirmed schemes (used for the high-volume
+ *                      inline sweep, where speculative variants are not worth
+ *                      the false-positive exposure)
+ */
+function mfxSolveXor(src, opts){
+  opts = opts || {};
+  var n = src.length;
+  if(n < 3 || n > MFX_MAX_LEN) return null;
+
+  var ck = mfxCacheKey(src, n, opts.key);
+  var cached = MFX_CACHE[ck];
+  if(cached !== undefined){ MFX_CACHE_HITS++; return cached; }
+  MFX_CACHE_MISSES++;
+
+  var out = MFX_SCRATCH;
+  var best = null;
+
+  for(var s=0;s<MFX_SCHEMES.length;s++){
+    var sch = MFX_SCHEMES[s];
+    if(opts.observedOnly && !sch.observed) continue;
+    if(sch.needsKey && (opts.key === undefined || opts.key === null)) continue;
+
+    var attempts;
+    if(sch.id === 'positional-key'){
+      // Recover seed and step from the first two bytes under the assumption
+      // that plaintext starts with a printable ASCII character, rather than
+      // brute-forcing 65536 combinations.
+      attempts = [];
+      for(var step=1; step<=8; step++){
+        for(var guess=0x20; guess<=0x7e; guess+=0x1f){
+          attempts.push([ (src[0] ^ guess) & 0xFF, step ]);
+        }
+      }
+    } else if(sch.id === 'chained-prev'){
+      attempts = [];
+      for(var g=0x20; g<=0x7e; g+=0x1f) attempts.push([ (src[0] ^ g) & 0xFF ]);
+    } else if(sch.needsKey){
+      attempts = [[opts.key]];
+    } else {
+      attempts = [[]];
+    }
+
+    for(var a=0;a<attempts.length;a++){
+      var args = attempts[a];
+      var len = sch.run(src, n, out, args[0], args[1]);
+      if(len < 0) continue;
+
+      var bar = sch.observed ? MFX_OBSERVED_MIN_PRINTABLE : MFX_SPECULATIVE_MIN_PRINTABLE;
+      var score = mfxScorePrintable(out, len, bar);
+      if(score < bar) continue;
+
+      var text = mfxToString(out, len);
+      if(!sch.observed && MFX_REQUIRE_SEMANTIC_FOR_SPECULATIVE && !MFX_RE_SEMANTIC.test(text)) continue;
+
+      var cand = {value:text, scheme:sch.id, score:score, observed:!!sch.observed};
+      if(sch.observed){ MFX_CACHE[ck] = cand; return cand; }
+      if(!best || cand.score > best.score) best = cand;
+    }
+  }
+
+  MFX_CACHE[ck] = best;
+  return best;
+}
+
+// ---------------------------------------------------------------------------
+// Constant-pool string to byte buffer.
+//
+// These obfuscators park raw bytes 0x00-0xFF inside String constants, so the
+// char codes of the decoded constant ARE the buffer the JVM hands to
+// toCharArray. Anything above 0xFF means the constant is genuine text and not
+// a carrier, so we decline rather than truncating it into nonsense.
+// ---------------------------------------------------------------------------
+function mfxStringToBytes(s){
+  var n = s.length;
+  if(n < 3 || n > MFX_MAX_LEN) return null;
+  var b = new Uint8Array(n);
+  for(var i=0;i<n;i++){
+    var c = s.charCodeAt(i);
+    if(c > 0xFF) return null;
+    b[i] = c;
+  }
+  return b;
+}
+
+/**
+ * Decode JVM modified UTF-8 held as raw bytes.
+ *
+ * parseClass stores CONSTANT_Utf8 entries as raw bytes widened to chars, so a
+ * payload byte such as 0x8F arrives as the pair (0xC2, 0x8F) rather than as a
+ * single char. Decoding recovers the exact char[] the JVM would hand to
+ * toCharArray. Which representation a given reader produces is not something
+ * MFX should have to know, so both are offered to the solver and whichever
+ * decodes wins.
+ */
+function mfxDecodeModifiedUtf8(bytes){
+  var out = [], i = 0, n = bytes.length;
+  while(i < n){
+    var a = bytes[i];
+    if(a < 0x80){ out.push(a); i++; }
+    else if((a & 0xE0) === 0xC0){
+      if(i + 1 >= n) return null;
+      out.push(((a & 0x1F) << 6) | (bytes[i+1] & 0x3F));
+      i += 2;
+    }
+    else if((a & 0xF0) === 0xE0){
+      if(i + 2 >= n) return null;
+      out.push(((a & 0x0F) << 12) | ((bytes[i+1] & 0x3F) << 6) | (bytes[i+2] & 0x3F));
+      i += 3;
+    }
+    else return null;
+  }
+  var b = new Uint8Array(out.length);
+  for(var k=0;k<out.length;k++){
+    if(out[k] > 0xFF) return null;
+    b[k] = out[k];
+  }
+  return b.length >= 3 ? b : null;
+}
+
+/** Every plausible byte-level reading of one constant, cheapest first. */
+function mfxCandidateBuffers(s){
+  var list = [];
+  var raw = mfxStringToBytes(s);
+  if(raw){
+    list.push(raw);
+    var dec = mfxDecodeModifiedUtf8(raw);
+    if(dec && dec.length !== raw.length) list.push(dec);
+  }
+  return list;
+}
+
+// ---------------------------------------------------------------------------
+// Bytecode frontend
+// ---------------------------------------------------------------------------
+
+function mfxLocalSlot(instr){
+  if(!instr) return null;
+  var m = /^local\[(\d+)\]/.exec(instr.args || '');
+  if(m) return parseInt(m[1], 10);
+  var m2 = /^a(load|store)_(\d)$/.exec(instr.name || '');
+  if(m2) return parseInt(m2[2], 10);
+  return null;
+}
+function mfxIsAload(instr){
+  return !!instr && (instr.name === 'aload' || /^aload_\d$/.test(instr.name));
+}
+function mfxIsAstore(instr){
+  return !!instr && (instr.name === 'astore' || /^astore_\d$/.test(instr.name));
+}
+function mfxCpIndex(instr){
+  var m = /^cp\[(\d+)\]/.exec((instr && instr.args) || '');
+  return m ? parseInt(m[1], 10) : null;
+}
+function mfxLdcString(instr, cp){
+  if(!instr || (instr.name !== 'ldc' && instr.name !== 'ldc_w')) return null;
+  var idx = mfxCpIndex(instr);
+  if(idx === null || !cp || !cp[idx]) return null;
+  var e = cp[idx];
+  if(e.t !== 8) return null;
+  var u = cp[e.si];
+  return (u && u.t === 1) ? {value:u.v, cpIndex:idx} : null;
+}
+function mfxLdcClass(instr, cp){
+  if(!instr || (instr.name !== 'ldc' && instr.name !== 'ldc_w')) return false;
+  var idx = mfxCpIndex(instr);
+  return !!(idx !== null && cp && cp[idx] && cp[idx].t === 7);
+}
+
+// --- Fix 5, bytecode side: opaque predicate suppression --------------------
+// Source-side equivalents of `if (0L != 0L)` and `if (String.class == null)`.
+// The jumped-over range is marked dead so decoy literals inside never reach
+// extraction. This covers the predicate shapes present in real samples; it is
+// not a general opaque-predicate solver, and control-flow obfuscators such as
+// Skidfuscator remain explicitly out of scope.
+function mfxDeadOffsets(instrs, cp){
+  var ranges = [];
+  for(var i=0;i<instrs.length;i++){
+    var ins = instrs[i], taken = null;
+    var tgt = _ddBranchTarget(instrs, i);
+    if(tgt < 0) continue;
+
+    if((ins.name === 'ifnull' || ins.name === 'ifnonnull') && i >= 1 && mfxLdcClass(instrs[i-1], cp)){
+      taken = (ins.name === 'ifnonnull');           // a class literal is never null
+    }
+    else if((ins.name === 'if_icmpeq' || ins.name === 'if_icmpne') && i >= 2){
+      var a = readIntLiteralInstr(instrs[i-2]), b = readIntLiteralInstr(instrs[i-1]);
+      if(a !== null && b !== null) taken = (ins.name === 'if_icmpeq') ? (a === b) : (a !== b);
+    }
+    else if((ins.name === 'ifeq' || ins.name === 'ifne') && i >= 1){
+      var v = readIntLiteralInstr(instrs[i-1]);
+      if(v === null && instrs[i-1].name === 'lcmp' && i >= 3 &&
+         instrs[i-2].name === 'lconst_0' && instrs[i-3].name === 'lconst_0') v = 0;
+      if(v !== null) taken = (ins.name === 'ifeq') ? (v === 0) : (v !== 0);
+    }
+
+    if(taken === true && instrs[tgt] && instrs[tgt].off > ins.off){
+      ranges.push([ins.off, instrs[tgt].off]);
+    }
+  }
+  ranges.sort(function(x,y){ return x[0]-y[0]; });
+  var merged = [];
+  for(var r=0;r<ranges.length;r++){
+    var cur = ranges[r];
+    if(merged.length && cur[0] <= merged[merged.length-1][1]){
+      merged[merged.length-1][1] = Math.max(merged[merged.length-1][1], cur[1]);
+    } else merged.push([cur[0], cur[1]]);
+  }
+  return merged;
+}
+function mfxIsDead(ranges, off){
+  var lo = 0, hi = ranges.length - 1;
+  while(lo <= hi){
+    var mid = (lo + hi) >> 1;
+    if(off < ranges[mid][0]) hi = mid - 1;
+    else if(off >= ranges[mid][1]) lo = mid + 1;
+    else return true;
+  }
+  return false;
+}
+
+// --- Fix 3, bytecode side: real StringBuilder sinks ------------------------
+// Learn which local slots genuinely hold a StringBuilder, from
+// `new StringBuilder / invokespecial <init> / astore N`.
+//
+// Without this, a backward scan from the append call lands on whichever local
+// the inlined decode loop happened to load last (the byte array, the counter),
+// so every fragment gets a different sink and nothing groups. javac emits the
+// receiver BEFORE the argument expression, which is why the nearest aload is
+// usually the wrong one.
+function mfxBuilderSlots(instrs){
+  var slots = {};
+  for(var i=0;i<instrs.length;i++){
+    if(instrs[i].name !== 'invokespecial') continue;
+    if((instrs[i].comment || '').indexOf('StringBuilder.<init>') < 0) continue;
+    for(var k=i+1;k<=i+3 && k<instrs.length;k++){
+      if(mfxIsAstore(instrs[k])){
+        var s = mfxLocalSlot(instrs[k]);
+        if(s !== null) slots[s] = true;
+        break;
+      }
+    }
+  }
+  return slots;
+}
+function mfxFindSink(instrs, from, builderSlots){
+  var limit = Math.min(instrs.length, from + 60);
+  for(var i=from;i<limit;i++){
+    var ins = instrs[i];
+    if(ins.name !== 'invokevirtual') continue;
+    if((ins.comment || '').indexOf('StringBuilder.append') < 0) continue;
+    var anySlots = false;
+    for(var q in builderSlots){ anySlots = true; break; }
+    for(var k=i-1;k>=0 && k>=i-120;k--){
+      if(!mfxIsAload(instrs[k])) continue;
+      var slot = mfxLocalSlot(instrs[k]);
+      if(slot === null) continue;
+      if(!anySlots || builderSlots[slot]) return 'L' + slot;
+    }
+    return 'sb?';
+  }
+  return null;
+}
+
+// Only stack shuffling and StringBuilder plumbing may separate two sites for
+// them to be spliceable. An undecoded string constant between them means we
+// would be joining across unknown content.
+function mfxIsGlue(instrs, a, b, cp){
+  for(var i=a;i<b;i++){
+    var ins = instrs[i];
+    if(/^(if|goto|jsr|tableswitch|lookupswitch|ret)/.test(ins.name)) return false;
+    if(ins.name === 'invokestatic' || ins.name === 'invokeinterface' || ins.name === 'invokedynamic') return false;
+    if(ins.name === 'invokevirtual' || ins.name === 'invokespecial'){
+      var c = ins.comment || '';
+      if(c.indexOf('StringBuilder.') < 0 &&
+         !/String\.(concat|valueOf|toString|join)/.test(c)) return false;
+    }
+    if(mfxLdcString(ins, cp)) return false;
+  }
+  return true;
+}
+
+// --- Fix 6, bytecode side: cross-class splice helper discovery -------------
+function mfxFindSpliceHelpers(disasmByMethod, methodDescs){
+  var names = {}, strips = [];
+  for(var key in disasmByMethod){
+    var desc = methodDescs[key];
+    if(!desc || !/^\(\[Ljava\/lang\/String;\)Ljava\/lang\/String;$/.test(desc)) continue;
+    var instrs = disasmByMethod[key], saw = false, pending = null;
+    for(var i=0;i<instrs.length;i++){
+      var lit = mfxLdcString(instrs[i], MFX_CURRENT_CP);
+      if(lit) pending = lit.value;
+      if(instrs[i].name === 'invokevirtual' && (instrs[i].comment||'').indexOf('.replaceAll') >= 0){
+        saw = true;
+        if(pending && strips.indexOf(pending) < 0) strips.push(pending);
+      }
+    }
+    if(saw) names[key.split(':')[0]] = true;
+  }
+  return {names:names, strips:strips};
+}
+var MFX_CURRENT_CP = null;
+var MFX_DEFAULT_STRIPS = ['[ *@]+', '[\u00e6\u0153]+'];
+
+function mfxSpliceStrip(parts, strips){
+  // Calls nest -- abc(replaceUseless(...)) strips two different junk classes in
+  // sequence -- so every learned class is applied cumulatively rather than
+  // picking one and leaving the other layer's padding in place.
+  var v = parts.join('');
+  for(var i=0;i<strips.length;i++){
+    try { v = v.replace(new RegExp(strips[i], 'g'), ''); } catch(e){ /* skip */ }
+  }
+  return v || null;
+}
+
+/**
+ * Scan one method's instructions and emit normalised Sites.
+ * ctx carries corpus-wide splice helper names and strip classes.
+ */
+function mfxScanMethod(instrs, cp, methodName, ctx){
+  MFX_CURRENT_CP = cp;
+  var dead = mfxDeadOffsets(instrs, cp);
+  var builderSlots = mfxBuilderSlots(instrs);
+  var found = [];
+
+  for(var i=0;i<instrs.length;i++){
+    var ins = instrs[i];
+    if(mfxIsDead(dead, ins.off)) continue;
+
+    // FAMILY A -- ldc <string> followed closely by a carrier call.
+    // Fix 2: BOTH carrier forms, since they are mixed within one method.
+    var lit = mfxLdcString(ins, cp);
+    if(lit){
+      var carrier = false;
+      for(var k=i+1;k<=i+3 && k<instrs.length;k++){
+        if(instrs[k].name !== 'invokevirtual') continue;
+        var cm = instrs[k].comment || '';
+        if(cm.indexOf('String.toCharArray') >= 0 || cm.indexOf('String.getBytes') >= 0){ carrier = true; break; }
+      }
+      if(carrier){
+        // observedOnly: the inline sweep touches every constant in every
+        // method, so speculative schemes are not worth the exposure here.
+        var bufs = mfxCandidateBuffers(lit.value), hit = null;
+        for(var bi=0; bi<bufs.length && !hit; bi++) hit = mfxSolveXor(bufs[bi], {observedOnly:true});
+        if(hit){ found.push({family:'INLINE_XOR:'+hit.scheme, value:hit.value, idx:i, off:ins.off}); continue; }
+      }
+    }
+
+    // FAMILY C -- a run of ldc strings feeding a known splice helper.
+    if(ins.name === 'invokestatic' || ins.name === 'invokevirtual'){
+      var cmt = ins.comment || '';
+      var mname = cmt.indexOf('.') >= 0 ? cmt.split('.').pop() : '';
+      if(mname && ctx.spliceNames[mname]){
+        var lits = [];
+        for(var k2=i-1;k2>=0 && k2>=i-80;k2--){
+          var l2 = mfxLdcString(instrs[k2], cp);
+          if(l2){ lits.unshift(l2.value); continue; }
+          if(instrs[k2].name === 'dup' || instrs[k2].name === 'aastore' ||
+             instrs[k2].name === 'anewarray' || readIntLiteralInstr(instrs[k2]) !== null) continue;
+          break;
+        }
+        if(lits.length){
+          var sv = mfxSpliceStrip(lits, ctx.strips);
+          if(sv && sv.length >= 2){ found.push({family:'SPLICE_STRIP', value:sv, idx:i, off:ins.off}); continue; }
+        }
+      }
+      // FAMILY D -- push N, then get:(I)Ljava/lang/String; yields field_N.
+      if(/\.get$/.test(cmt) && i >= 1){
+        var num = readIntLiteralInstr(instrs[i-1]);
+        if(num !== null && num >= 100 && num <= 99999){
+          found.push({family:'FIELD_INDIRECT', value:'field_'+num, idx:i, off:ins.off});
+          continue;
+        }
+      }
+    }
+  }
+
+  var sites = [];
+  for(var f=0;f<found.length;f++){
+    var h = found[f], prev = found[f-1];
+    sites.push({
+      family: h.family,
+      value: h.value,
+      order: f,
+      scope: methodName,
+      sink: mfxFindSink(instrs, h.idx + 1, builderSlots),
+      adjacentToPrev: !!prev && mfxIsGlue(instrs, prev.idx + 1, h.idx, cp)
+    });
+  }
+  return {sites:sites, deadRanges:dead.length};
+}
+
+// ---------------------------------------------------------------------------
+// Source frontend -- same Site shape, so everything below is shared.
+// ---------------------------------------------------------------------------
+
+var MFX_RE_CARRIER = /"((?:\\.|[^"\\])*)"\s*\.\s*(?:toCharArray\s*\(\s*\)|getBytes\s*\(\s*(?:"ISO-8859-1"|StandardCharsets\s*\.\s*ISO_8859_1)\s*\))/g;
+
+function mfxUnescapeJava(body){
+  var out = [], i = 0;
+  while(i < body.length){
+    var c = body[i];
+    if(c !== '\\'){ out.push(body.charCodeAt(i)); i++; continue; }
+    var n = body[i+1];
+    if(n === undefined) return null;
+    if(n === 'u'){
+      var j = i + 2;
+      while(body[j] === 'u') j++;
+      var hex = body.slice(j, j+4);
+      if(!/^[0-9a-fA-F]{4}$/.test(hex)) return null;
+      out.push(parseInt(hex,16)); i = j + 4; continue;
+    }
+    if(n >= '0' && n <= '7'){
+      var oct = '', j2 = i + 1;
+      while(j2 < body.length && body[j2] >= '0' && body[j2] <= '7' && oct.length < 3){ oct += body[j2]; j2++; }
+      out.push(parseInt(oct,8)); i = j2; continue;
+    }
+    var simple = {n:10,t:9,r:13,b:8,f:12,s:32,'\\':92,'"':34,"'":39};
+    if(Object.prototype.hasOwnProperty.call(simple,n)){ out.push(simple[n]); i += 2; continue; }
+    out.push(body.charCodeAt(i+1)); i += 2;
+  }
+  return out;
+}
+
+// Fix 5, source side: statically-false conditions, evaluated without eval().
+function mfxEvalArith(src){
+  var text = src.replace(/[Ll]\b/g,'').trim();
+  if(!text) return null;
+  if(!/^[\s0-9+\-*/%().]+$/.test(text) && !/^\s*0[xX][0-9a-fA-F]+\s*$/.test(text)) return null;
+  var pos = 0;
+  function skip(){ while(pos<text.length && /\s/.test(text[pos])) pos++; }
+  function expr(){
+    var v = term(); if(v===null) return null;
+    for(;;){ skip(); var c=text[pos]; if(c!=='+'&&c!=='-') return v; pos++;
+      var r=term(); if(r===null) return null; v = c==='+'? v+r : v-r; }
+  }
+  function term(){
+    var v = unary(); if(v===null) return null;
+    for(;;){ skip(); var c=text[pos]; if(c!=='*'&&c!=='/'&&c!=='%') return v; pos++;
+      var r=unary(); if(r===null) return null;
+      if((c==='/'||c==='%') && r===0) return null;
+      v = c==='*'? v*r : (c==='/'? Math.trunc(v/r) : v%r); }
+  }
+  function unary(){
+    skip();
+    if(text[pos]==='-'){ pos++; var v=unary(); return v===null?null:-v; }
+    if(text[pos]==='+'){ pos++; return unary(); }
+    return atom();
+  }
+  function atom(){
+    skip();
+    if(text[pos]==='('){ pos++; var v=expr(); skip(); if(text[pos]!==')') return null; pos++; return v; }
+    var hx = /^0[xX][0-9a-fA-F]+/.exec(text.slice(pos));
+    if(hx){ pos += hx[0].length; return parseInt(hx[0],16); }
+    var de = /^\d+/.exec(text.slice(pos));
+    if(!de) return null;
+    pos += de[0].length; return parseInt(de[0],10);
+  }
+  var val = expr(); skip();
+  return pos === text.length ? val : null;
+}
+function mfxAlwaysFalse(cond){
+  var c = cond.trim();
+  if(c === 'false') return true;
+  if(/^[\w.$]+\.class\s*==\s*null$/.test(c)) return true;
+  if(/^null\s*==\s*[\w.$]+\.class$/.test(c)) return true;
+  var m = /(==|!=|<=|>=|<|>)/.exec(c);
+  if(!m) return false;
+  var l = mfxEvalArith(c.slice(0,m.index)), r = mfxEvalArith(c.slice(m.index+m[0].length));
+  if(l === null || r === null) return false;
+  switch(m[0]){
+    case '==': return !(l===r); case '!=': return !(l!==r);
+    case '<': return !(l<r);   case '>': return !(l>r);
+    case '<=': return !(l<=r); case '>=': return !(l>=r);
+  }
+  return false;
+}
+function mfxParenGroup(src, open){
+  if(src[open] !== '(') return null;
+  var depth = 0, inStr = false, inChr = false;
+  for(var i=open;i<src.length;i++){
+    var ch = src[i];
+    if(inStr){ if(ch==='\\') i++; else if(ch==='"') inStr=false; continue; }
+    if(inChr){ if(ch==='\\') i++; else if(ch==="'") inChr=false; continue; }
+    if(ch==='"'){ inStr=true; continue; }
+    if(ch==="'"){ inChr=true; continue; }
+    if(ch==='(') depth++;
+    else if(ch===')'){ depth--; if(depth===0) return {inner:src.slice(open+1,i), end:i+1}; }
+  }
+  return null;
+}
+function mfxMatchBlock(src, from){
+  var i = from;
+  while(i < src.length && src[i] !== '{'){ if(!/\s/.test(src[i])) return -1; i++; }
+  if(src[i] !== '{') return -1;
+  var depth=0, inStr=false, inChr=false, inLine=false, inBlk=false;
+  for(;i<src.length;i++){
+    var ch=src[i], nx=src[i+1];
+    if(inLine){ if(ch==='\n') inLine=false; continue; }
+    if(inBlk){ if(ch==='*'&&nx==='/'){ inBlk=false; i++; } continue; }
+    if(inStr){ if(ch==='\\') i++; else if(ch==='"') inStr=false; continue; }
+    if(inChr){ if(ch==='\\') i++; else if(ch==="'") inChr=false; continue; }
+    if(ch==='/'&&nx==='/'){ inLine=true; i++; continue; }
+    if(ch==='/'&&nx==='*'){ inBlk=true; i++; continue; }
+    if(ch==='"'){ inStr=true; continue; }
+    if(ch==="'"){ inChr=true; continue; }
+    if(ch==='{') depth++;
+    else if(ch==='}'){ depth--; if(depth===0) return i+1; }
+  }
+  return -1;
+}
+function mfxSourceDeadRanges(src){
+  var ranges = [], re = /\bif\s*\(/g, m;
+  while((m = re.exec(src)) !== null){
+    var g = mfxParenGroup(src, m.index + m[0].length - 1);
+    if(!g || !mfxAlwaysFalse(g.inner)) continue;
+    var end = mfxMatchBlock(src, g.end);
+    if(end > 0) ranges.push([m.index, end]);
+  }
+  ranges.sort(function(a,b){ return a[0]-b[0]; });
+  var out = [];
+  for(var i=0;i<ranges.length;i++){
+    if(out.length && ranges[i][0] <= out[out.length-1][1]) out[out.length-1][1] = Math.max(out[out.length-1][1], ranges[i][1]);
+    else out.push([ranges[i][0], ranges[i][1]]);
+  }
+  return out;
+}
+function mfxSourceScope(src, off){
+  var head = src.lastIndexOf('\n', off);
+  var seg = src.slice(Math.max(0, off - 6000), off);
+  var re = /([\w$]+)\s*\([^)]*\)\s*(?:throws [\w.,\s]+)?\{/g, m, last = null;
+  while((m = re.exec(seg)) !== null) last = m[1];
+  return last || '<clinit-or-field>';
+}
+// Fix 4, source side: the append can sit on EITHER side of the literal.
+// `sb.append(lit.toCharArray())` puts it before; the inlined-loop form puts it
+// after. Bytecode never has this problem because the invoke always follows the
+// constant, so the source path is the one that needs both directions.
+function mfxSourceSink(src, start, end){
+  var from = Math.max(0, start - 600);
+  var before = src.slice(from, start);
+  var cut = Math.max(before.lastIndexOf(';'), Math.max(before.lastIndexOf('{'), before.lastIndexOf('}')));
+  var stmt = before.slice(cut + 1);
+  var back = /([\w$]+)\s*\.\s*append\s*\(/.exec(stmt);
+  if(back) return back[1];
+  var fwd = /([\w$]+)\s*\.\s*append\s*\(/.exec(src.slice(end, end + 600));
+  return fwd ? fwd[1] : null;
+}
+function mfxSourceGlue(text){
+  var t = text.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/\/\/[^\n]*/g,' ');
+  if(t.indexOf('"') >= 0) return false;
+  if(/[{}]/.test(t)) return false;
+  if(/\b(?:if|else|for|while|do|switch|case|return|throw|try|catch|finally|break|continue)\b/.test(t)) return false;
+  var s = t.replace(/new\s+StringBuilder\s*\([^)]*\)/g,' ')
+           .replace(/\b(?:append|toString|join|String|StringBuilder|concat|valueOf)\b/g,' ')
+           .replace(/\b[\w$]+\b/g,' ')
+           .replace(/[+,;.()\[\]=\s]/g,'');
+  return s.length === 0;
+}
+
+function mfxScanSource(text, ctx){
+  var dead = mfxSourceDeadRanges(text);
+  function isDead(off){
+    for(var i=0;i<dead.length;i++){ if(off >= dead[i][0] && off < dead[i][1]) return true; if(off < dead[i][0]) return false; }
+    return false;
+  }
+  var raw = [], m;
+  MFX_RE_CARRIER.lastIndex = 0;
+  while((m = MFX_RE_CARRIER.exec(text)) !== null){
+    if(isDead(m.index)) continue;
+    var chars = mfxUnescapeJava(m[1]);
+    if(!chars) continue;
+    var ok = true, buf = new Uint8Array(chars.length);
+    for(var i=0;i<chars.length;i++){ if(chars[i] > 0xFF){ ok = false; break; } buf[i] = chars[i]; }
+    if(!ok) continue;
+    var r = mfxSolveXor(buf, {observedOnly:true});
+    if(!r) continue;
+    raw.push({family:'INLINE_XOR:'+r.scheme, value:r.value, start:m.index, end:m.index + m[0].length});
+  }
+
+  if(ctx.spliceNamesList.length){
+    var pat = ctx.spliceNamesList.map(function(n){ return n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }).join('|');
+    var hre = new RegExp('(?:[\\w$]+\\s*\\.\\s*)?(' + pat + ')\\s*\\(', 'g');
+    while((m = hre.exec(text)) !== null){
+      if(isDead(m.index)) continue;
+      var g = mfxParenGroup(text, m.index + m[0].length - 1);
+      if(!g) continue;
+      var lits = [], lre = /"((?:\\.|[^"\\])*)"/g, lm, good = true;
+      while((lm = lre.exec(g.inner)) !== null){
+        var ch = mfxUnescapeJava(lm[1]);
+        if(!ch){ good = false; break; }
+        lits.push(ch.map(function(c){ return String.fromCharCode(c); }).join(''));
+      }
+      if(!good || !lits.length) continue;
+      var sv = mfxSpliceStrip(lits, ctx.strips);
+      if(sv && sv.length >= 2) raw.push({family:'SPLICE_STRIP', value:sv, start:m.index, end:g.end});
+    }
+  }
+
+  raw.sort(function(a,b){ return a.start - b.start || b.end - a.end; });
+  // Fix 7: nested calls produce an outer site fully containing an inner one
+  // over the same literals. Keep the outermost.
+  var kept = [], cover = -1;
+  for(var q=0;q<raw.length;q++){
+    if(raw[q].start < cover && raw[q].end <= cover) continue;
+    kept.push(raw[q]);
+    if(raw[q].end > cover) cover = raw[q].end;
+  }
+
+  var sites = [];
+  for(var s=0;s<kept.length;s++){
+    var h = kept[s], prev = kept[s-1];
+    sites.push({
+      family: h.family, value: h.value, order: s,
+      scope: mfxSourceScope(text, h.start),
+      sink: mfxSourceSink(text, h.start, h.end),
+      adjacentToPrev: !!prev && (h.start - prev.end) <= 200 && mfxSourceGlue(text.slice(prev.end, h.start))
+    });
+  }
+  return {sites:sites, deadRanges:dead.length};
+}
+
+// ---------------------------------------------------------------------------
+// Shared core -- reassembly (fixes 3 and 4) and pruning.
+// ---------------------------------------------------------------------------
+
+var MFX_MAX_WINDOW = 5;
+
+function mfxReassemble(sites){
+  var strict = [], run = null;
+  for(var i=0;i<sites.length;i++){
+    var s = sites[i];
+    if(run && s.adjacentToPrev){ run.push(s); continue; }
+    if(run && run.length > 1) strict.push(run);
+    run = [s];
+  }
+  if(run && run.length > 1) strict.push(run);
+
+  var byBuilder = {}, byScope = {};
+  for(var j=0;j<sites.length;j++){
+    var st = sites[j];
+    if(st.sink){
+      var bk = st.scope + '#' + st.sink;
+      (byBuilder[bk] = byBuilder[bk] || []).push(st);
+    }
+    (byScope[st.scope] = byScope[st.scope] || []).push(st);
+  }
+
+  // Bounded windows, never a whole-scope join. Joining every fragment in a
+  // method manufactures chimeras such as "https://api.ipify.orguser.nameos.name".
+  // Windows are built over the sites a builder did NOT claim, rather than being
+  // skipped for any scope that happens to contain a builder somewhere.
+  //
+  // One scope routinely holds both kinds of run: <init> in 198-Macro appends 40
+  // RPC URLs into StringBuilders and ALSO assembles the fallback C2 into plain
+  // locals. Keying the skip by scope meant that second group was never joined,
+  // so its fragments leaked individually and the report showed a truncated
+  // "sltnnt.ru" instead of the real host and its path.
+  var claimedByBuilder = [];
+  for(var bk in byBuilder){
+    if(byBuilder[bk].length > 1){
+      for(var ci=0;ci<byBuilder[bk].length;ci++) claimedByBuilder.push(byBuilder[bk][ci]);
+    }
+  }
+  var windows = [];
+  for(var sc in byScope){
+    // Contiguous runs of unclaimed sites only. A builder-claimed site breaks the
+    // run rather than being spliced across.
+    var list = byScope[sc], runs = [], cur = [];
+    for(var li=0; li<list.length; li++){
+      if(claimedByBuilder.indexOf(list[li]) >= 0){ if(cur.length) runs.push(cur); cur = []; }
+      else cur.push(list[li]);
+    }
+    if(cur.length) runs.push(cur);
+    for(var ri=0; ri<runs.length; ri++){
+      var run = runs[ri];
+      for(var size=2;size<=MFX_MAX_WINDOW;size++){
+        for(var w=0;w+size<=run.length;w++){
+          windows.push({scope:sc, count:size, members:run.slice(w, w+size),
+            value:run.slice(w, w+size).map(function(p){ return p.value; }).join('')});
+        }
+      }
+    }
+  }
+
+  var builders = [];
+  for(var bkey in byBuilder){
+    builders.push({sink:bkey, scope:bkey.split('#')[0], count:byBuilder[bkey].length,
+      members:byBuilder[bkey],
+      value:byBuilder[bkey].map(function(p){ return p.value; }).join('')});
+  }
+
+  return {
+    strict: strict.map(function(r){ return {count:r.length, members:r, value:r.map(function(p){ return p.value; }).join('')}; }),
+    builders: builders,
+    windows: windows
+  };
+}
+
+// Fix 4b: a join window can glue a real URL to whatever literal followed it.
+// Where two values of the same IOC type share a prefix, the longer one is the
+// artefact of over-joining and the shorter is the true value.
+function mfxPruneSubsumed(iocs){
+  var SUBSUMABLE = {url:1, payload_url:1, geoip_url:1, webhook:1, domain:1, telegram_api:1};
+  var byType = {};
+  iocs.forEach(function(i){ (byType[i.type] = byType[i.type] || []).push(i); });
+  var drop = [];
+  for(var t in byType){
+    if(!SUBSUMABLE[t]) continue;
+    var list = byType[t];
+    for(var a=0;a<list.length;a++){
+      for(var b=0;b<list.length;b++){
+        if(a === b) continue;
+        if(list[b].value.length > list[a].value.length && list[b].value.indexOf(list[a].value) === 0){
+          if(drop.indexOf(list[b]) < 0) drop.push(list[b]);
+        }
+      }
+    }
+  }
+  return iocs.filter(function(i){ return drop.indexOf(i) < 0; });
+}
+
+/**
+ * Corpus-wide resolution pass. Called from deduplicateIOCs alongside the other
+ * resolvers. Builds the cross-class splice context first (fix 6), then scans
+ * every class and every decompiled source file, reassembles, and pushes IOCs.
+ */
+function resolveMfxSites(){
+  var ctx = {spliceNames:{}, spliceNamesList:[], strips:MFX_DEFAULT_STRIPS.slice()};
+
+  // Pass 1 -- learn helpers across the WHOLE sample, not per file. Splice
+  // helpers are declared in Utils and called from Fields, so a per-file scan
+  // finds zero of them.
+  Object.values(S.classes).forEach(function(c){
+    if(!c.mfxHelpers) return;
+    Object.keys(c.mfxHelpers.names || {}).forEach(function(n){ ctx.spliceNames[n] = true; });
+    (c.mfxHelpers.strips || []).forEach(function(s){ if(ctx.strips.indexOf(s) < 0) ctx.strips.push(s); });
+  });
+  Object.keys(S.files).forEach(function(path){
+    var f = S.files[path];
+    if(!f || !f.isDecompiledSource || !f.text) return;
+    var re = /(?:static\s+)?String\s+([\w$]+)\s*\(\s*String\s*\.\.\.\s*\w+\s*\)\s*\{[\s\S]{0,400}?replaceAll\s*\(/g, m;
+    while((m = re.exec(f.text)) !== null) ctx.spliceNames[m[1]] = true;
+    var sre = /replaceAll\s*\(\s*"((?:\\.|[^"\\])*)"\s*,\s*""\s*\)/g, sm;
+    while((sm = sre.exec(f.text)) !== null){
+      var ch = mfxUnescapeJava(sm[1]);
+      if(!ch) continue;
+      var cls = ch.map(function(c){ return String.fromCharCode(c); }).join('');
+      if(ctx.strips.indexOf(cls) < 0) ctx.strips.push(cls);
+    }
+  });
+  ctx.spliceNamesList = Object.keys(ctx.spliceNames);
+
+  var pushed = 0;
+
+  function consume(sites, deadRanges, label, target){
+    if(!sites.length) return;
+    var joined = mfxReassemble(sites);
+    var texts = [], seen = {};
+    function take(v, origin){
+      if(!v || v.length < 4 || seen[v]) return;
+      seen[v] = 1;
+      texts.push({value:v, origin:origin});
+    }
+    // A fragment that was successfully reassembled must NOT also be reported
+    // on its own, or the scan shows "https://poly" and "gon-rpc.com" beside the
+    // real "https://polygon-rpc.com". Suppress the parts, keep the whole.
+    var reassembled = [];
+    joined.builders.forEach(function(b){ if(b.count > 1) reassembled.push(b.members); });
+    joined.strict.forEach(function(r){ if(r.count > 1) reassembled.push(r.members); });
+    var claimed = [];
+    reassembled.forEach(function(list){
+      list.forEach(function(m){ if(claimed.indexOf(m) < 0) claimed.push(m); });
+    });
+
+    // Only joins backed by EVIDENCE of concatenation may produce indicators:
+    //   builder  -- the fragments provably feed one StringBuilder
+    //   strict   -- the fragments are syntactically concatenated
+    //
+    // Sliding windows have neither. They were joining merely adjacent decoded
+    // literals, and in real samples adjacent literals are usually independent
+    // values, not pieces of one string. In 198-Macro the three sites either
+    // side of the fallback C2 are separate field assignments:
+    //
+    //   aiSi.ktEjHkCVuMC5 = "0xce6d41de"
+    //   aiSi.runQifwzz    = "sltnnt.ru"
+    //   aiSi.qcPFb        = "/cdn/e/3b8f6d2a9c1e"
+    //
+    // Splicing those produced the corrupted host "0xce6d41desltnnt.ru/cdn/..."
+    // and, in ky_zqu, the invented domain "dns.com" out of the fragments of
+    // "application/dns-message". Windows are therefore kept for the decoded
+    // string view only and never reach extractIOCs. A missing indicator is
+    // recoverable; a wrong domain in a report is not.
+    sites.forEach(function(s){ if(claimed.indexOf(s) < 0) take(s.value, 'literal'); });
+    joined.strict.forEach(function(s){ if(s.count > 1) take(s.value, 'strict-join'); });
+    joined.builders.forEach(function(b){ if(b.count > 1) take(b.value, 'builder'); });
+
+    // An 0x-prefixed 40-hex string is shape-identical whether it is a wallet
+    // (EOA) or a contract, so the regex alone cannot tell them apart and the
+    // generic crypto label is the honest default.
+    //
+    // It becomes decidable when the surrounding decoded strings show the
+    // address being used as the `to` of an eth_call: that RPC returns empty
+    // against an EOA, so a `to` in an eth_call is a contract by construction.
+    // The distinction changes the response. A wallet means chase the funds; a
+    // contract used as a dead-drop means the live C2 can be read out of chain
+    // state right now.
+    var corpus = texts.map(function(t){ return t.value; }).join('\n');
+    var usesEthCall = /"method"\s*:\s*"eth_(?:call|getStorageAt)"|eth_call/.test(corpus);
+    var usesToField = /"to"\s*:\s*"/.test(corpus);
+    var evmSubtype = (usesEthCall && usesToField) ? 'contract' : null;
+
+    var collected = [];
+    texts.forEach(function(t){
+      var iocs = extractIOCs(t.value, label + '[mfx:' + t.origin + ']');
+      iocs.forEach(function(ioc){
+        ioc.decoded = true; ioc.technique = 'mfx-adaptive';
+        // Class-scoped evidence, not proof for every address in the class, so
+        // it is recorded as a qualifier rather than as a different type.
+        if(evmSubtype && ioc.type === 'crypto_wallet' && /^0x[0-9a-fA-F]{40}$/.test(ioc.value)){
+          ioc.subtype = evmSubtype;
+          ioc.subtypeReason = 'used as the to-address of an eth_call';
+        }
+        collected.push(ioc);
+      });
+      var sigHits = scanSigs(t.value, []);
+      if(sigHits.length && target){
+        target.malwareSigs = (target.malwareSigs || []).concat(sigHits);
+        if(S.files[label]) S.files[label].sigs = (S.files[label].sigs || []).concat(sigHits);
+      }
+    });
+    collected = mfxPruneSubsumed(collected);
+    collected.forEach(function(ioc){ S.iocs.push(ioc); pushed++; });
+    if(collected.length){
+      if(target) target.flagged = true;
+      if(S.files[label]) S.files[label].flagged = true;
+    }
+    if(target){
+      target.mfxDecoded = sites.map(function(s){ return {value:s.value, family:s.family, scope:s.scope}; });
+      target.mfxJoined = joined;
+      target.mfxDeadRanges = deadRanges;
+    }
+  }
+
+  Object.values(S.classes).forEach(function(c){
+    if(!c.mfxPending || !c.mfxPending.length) return;
+    var all = [], deadTotal = 0;
+    c.mfxPending.forEach(function(p){
+      var r = mfxScanMethod(p.instrs, c.cp, p.method, ctx);
+      deadTotal += r.deadRanges;
+      r.sites.forEach(function(s){ all.push(s); });
+    });
+    consume(all, deadTotal, c.path, c);
+    c.mfxPending = null;   // release the retained disassembly
+  });
+
+  Object.keys(S.files).forEach(function(path){
+    var f = S.files[path];
+    if(!f || !f.isDecompiledSource || !f.text) return;
+    var r = mfxScanSource(f.text, ctx);
+    consume(r.sites, r.deadRanges, path, null);
+  });
+
+  return pushed;
+}
+
+
 function isKeyedXorDecodeMethod(instrs, desc){
   // Cheap descriptor filter first: must take a byte array and an int, return String.
   if(desc.indexOf('[B')<0 || desc.indexOf('I')<0 || desc.indexOf(')Ljava/lang/String;')<0) return false;
@@ -4398,6 +5639,39 @@ async function processFile(file, mergeMode){
   document.getElementById("mainUI").style.display="flex";
   setStatus("Loading "+file.name+"...");
   var ext=file.name.toLowerCase().split(".").pop();
+  // v3.5.0: the detection engines need the ORIGINAL bytes, not the decompiled
+  // output. Read once here and hand the same buffer to both engines later.
+  try{ S.lastSampleBytes = await file.arrayBuffer(); }catch(e){ S.lastSampleBytes = null; }
+  S.lastJobId = null;
+  S.fuzzy = null;
+
+  // Fingerprint IMMEDIATELY, in parallel with the decompile, rather than
+  // after it. Two reasons, and the second is the important one:
+  //   1. this is the whole point of rapid triage. It answers in about a
+  //      second while the JVM is still starting.
+  //   2. the samples that most need it are exactly the ones where the slow
+  //      path never finishes. A parser bomb stalls the decompiler for
+  //      minutes and then bails out of this function, so a fingerprint that
+  //      only ran after a SUCCESSFUL decompile never ran at all on the one
+  //      class of sample it was built for.
+  // The decompile, if it succeeds, triggers a second pass that folds in the
+  // source half.
+  if(window.Rho9Fuzzy && Rho9Fuzzy.supported() && S.lastSampleBytes){
+    setBadge("tb-fuzzy", 0);
+    Rho9Fuzzy.scanSample(S.lastSampleBytes, file.name)
+      .then(function(out){
+        if(!out) return;
+        setBadge("tb-fuzzy", (out.matches||[]).length);
+        if(out.guess && out.guess.classification === "malware"){
+          var tb = document.getElementById("tb-fuzzy");
+          if(tb) tb.classList.add("danger-tab");
+        }
+        Rho9Fuzzy.render();
+        try{ renderOverview(); }catch(e){}
+      })
+      .catch(function(){ /* optional; never blocks the analysis */ });
+  }
+
   var bridgeBuf=null;
   if(ext==="jar"){
     // queueFiles() already gated this — bridge must be ready and auto-decompile
@@ -4413,6 +5687,14 @@ async function processFile(file, mergeMode){
       bridgeBuf = await Rho9Bridge.decompileToZip(file);
     }catch(err){
       setStatus("ERROR: bridge decompile failed");
+      // The fingerprint fired before this and stands on its own, so tell the
+      // analyst it is there instead of leaving them with nothing.
+      if(window.Rho9Fuzzy && Rho9Fuzzy.supported() && S.lastSampleBytes){
+        try{
+          Rho9Fuzzy.render();
+          setStatus("Decompile failed. Fuzzy triage is still available in the Fuzzy Match tab.");
+        }catch(e){}
+      }
       showInfoModal("Decompile Failed","<div class=\"err-box\">"+esc(err.message)+"</div><br>You can still decompile manually at <a href=\"https://www.decompiler.com\" target=\"_blank\" style=\"color:var(--pink)\">decompiler.com</a> and load the resulting .zip.");
       return;
     }
@@ -4574,6 +5856,10 @@ function deduplicateIOCs(){
   resolveKeyedXorCalls();
   resolvePixelCipherCalls();
   resolveDeepDecodeCalls();
+  // MFX adaptive pass. Runs last of the resolvers so its results dedupe against
+  // whatever the narrow matchers already recovered, and so its cross-class
+  // splice-helper context sees every parsed class.
+  try { resolveMfxSites(); } catch(e){ if(window.console) console.warn('MFX pass failed:', e); }
   var seen={}; S.iocs=S.iocs.filter(function(i){ var k=i.type+"::"+i.value; if(seen[k]) return false; seen[k]=1; return true; });
   var urlCoverage=S.iocs.filter(function(i){ return i.type==="webhook"||i.type==="url"||i.type==="payload_url"||i.type==="telegram_api"; }).map(function(i){ return i.value.toLowerCase(); });
   S.iocs=S.iocs.filter(function(i){
@@ -4912,7 +6198,24 @@ var PASSES = {
       return d;
     }catch(e){ return null; }
   },
-  hex: function(s){ var m=s.match(/^(?:0x)?([0-9a-fA-F]{2,})$/); if(!m) return null; var h=m[1]; if(h.length%2!==0) return null; try{ var o=""; for(var i=0;i<h.length;i+=2) o+=String.fromCharCode(parseInt(h.slice(i,i+2),16)); return o; }catch(e){ return null; } },
+  // binary: "01000110..." as 8-bit groups. A genuine obfuscation method in Java
+  // crypters, and the reason a blanket reject of binary-looking input is wrong:
+  // the strings need DECODING, not skipping. Anything not a whole number of
+  // octets is not a byte string, and the printability guard below is what keeps
+  // decoy bit-runs out.
+  binary: function(s){
+    var c = s.replace(/[\s_.,-]/g,"");
+    if(!/^[01]+$/.test(c)) return null;
+    if(c.length % 8 !== 0 || c.length < 16) return null;
+    try{
+      var o = "";
+      for(var i=0;i<c.length;i+=8) o += String.fromCharCode(parseInt(c.slice(i,i+8),2));
+      var p=0; for(var j=0;j<o.length;j++){ var cc=o.charCodeAt(j); if((cc>=32&&cc<127)||cc===9||cc===10||cc===13) p++; }
+      if(p/o.length<0.55) return "(binary) "+Array.from(o).map(function(x){ return x.charCodeAt(0).toString(16).padStart(2,"0"); }).join(" ");
+      return o;
+    }catch(e){ return null; }
+  },
+  hex: function(s){ var m=s.match(/^(?:0x)?([0-9a-fA-F]{2,})$/); if(!m) return null; var h=m[1]; if(h.length%2!==0) return null; try{ var o=""; for(var i=0;i<h.length;i+=2) o+=String.fromCharCode(parseInt(h.slice(i,i+2),16)); if(o.length<2) return null; var p=0; for(var j=0;j<o.length;j++){ var cc=o.charCodeAt(j); if((cc>=32&&cc<127)||cc===9||cc===10||cc===13) p++; } if(p/o.length<0.55) return "(binary) "+Array.from(o).map(function(x){ return x.charCodeAt(0).toString(16).padStart(2,"0"); }).join(" "); return o; }catch(e){ return null; } },
   hexStream: function(s){ var c=s.replace(/[\s\\]/g,"").replace(/0x/gi,""); if(!/^[0-9a-fA-F]+$/.test(c)||c.length<8||c.length%2!==0) return null; try{ var o="",p=0; for(var i=0;i<c.length;i+=2){ var b=parseInt(c.slice(i,i+2),16); o+=String.fromCharCode(b); if(b>=32&&b<127) p++; } return p/o.length>0.75?o:null; }catch(e){ return null; } },
   unicode: function(s){ if(s.indexOf("\\u")<0) return null; var o=s.replace(/\\u([0-9a-fA-F]{4})/g,function(_,h){ return String.fromCharCode(parseInt(h,16)); }); return o!==s?o:null; },
   urlDecode: function(s){ try{ if(s.indexOf("%")<0) return null; var d=decodeURIComponent(s); return d!==s?d:null; }catch(e){ return null; } },
@@ -4978,7 +6281,7 @@ var PASSES = {
   }
 };
 
-var AUTO_PASSES=["base64","hex","hexStream","unicode","urlDecode","javaByteArray","htmlEntityDecode","charCodeArray","rot13Gated"];
+var AUTO_PASSES=["binary","base64","hex","hexStream","unicode","urlDecode","javaByteArray","htmlEntityDecode","charCodeArray","rot13Gated"];
 // 2026 bugfix: previously committed to the FIRST pass that returned non-null,
 // even a "(binary)" fallback (base64's own signal that it decoded to garbage).
 // Hex digits are a subset of the base64 alphabet, so a hex-encoded string
@@ -4997,6 +6300,63 @@ function deobOne(name,input){ var fn=PASSES[name]; if(!fn) return {chain:[],fina
 // without producing noise — the cost is CPU time, not false positives, which is
 // why length bounds below exist (skip trivial short identifiers and skip huge
 // text blobs that are never going to be a single encoded token anyway).
+// --- Auto-sweep gating -----------------------------------------------------
+// The claim above that the individual passes are self-gating enough to run
+// broadly without false positives is not true in practice, and the auto sweep
+// is where that costs the most: every result it emits is shown to an analyst as
+// a finding, without anyone having asked for it.
+//
+// Two independent filters are needed. The first rejects inputs that merely
+// LOOK like an encoding, the second rejects outputs that are not text. Neither
+// applies to the manual DEOB button: if someone explicitly asks to decode a
+// string, they get whatever comes out.
+
+// Inputs that satisfy an encoding's charset by coincidence rather than intent.
+function mfxAutoDecodeWorthTrying(s){
+  // Binary and decimal inputs are NOT skipped. Binary is a real obfuscation
+  // method with its own pass above, and a decimal run can still be a valid hex
+  // byte string. What rules them out when they are merely numeric constants is
+  // the shape check below plus the output gate, not a blanket reject on the
+  // input alphabet.
+  //
+  // Worked example: "11110111001" is 11 bits, so the binary pass declines it
+  // (not a whole octet) and the base64 pass declines it (11 is not a quartet
+  // and it carries no padding). It disappears on shape, without binary as a
+  // class being thrown away.
+  var bits = s.replace(/[\s_.,-]/g,"");
+  if(/^[01]+$/.test(bits) && bits.length % 8 === 0 && bits.length >= 16) return true;
+  // Base64 carries meaning only at a 4-char boundary. The pass pads anything to
+  // fit, which is right for a human-supplied fragment and wrong for a sweep.
+  // Padded input must be a whole number of quartets; unpadded input may end on
+  // a 2- or 3-char remainder but never a 1-char one, which is unrepresentable.
+  var b64ish = /^[A-Za-z0-9+\/_-]+={0,2}$/.test(s);
+  var hexish = /^(?:0x)?[0-9a-fA-F]+$/.test(s);
+  if(b64ish && !hexish){
+    if(/=$/.test(s)){ if(s.length % 4 !== 0) return false; }
+    else if(s.length % 4 === 1) return false;
+  }
+  // Odd-length hex cannot be a byte string.
+  if(hexish && !b64ish && s.replace(/^0x/,'').length % 2 !== 0) return false;
+  return true;
+}
+
+// Outputs that are not plausibly text. Mostly-printable is necessary but not
+// sufficient: four random bytes are often 60% printable and still meaningless.
+// Requiring a short letter run or a structural marker is what separates a real
+// decoded string from noise.
+function mfxDecodedLooksMeaningful(v){
+  if(!v || v.length < 4) return false;
+  if(v.indexOf("(binary)") === 0) return false;
+  var printable = 0;
+  for(var i=0;i<v.length;i++){
+    var c = v.charCodeAt(i);
+    if((c>=32 && c<127) || c===9 || c===10 || c===13) printable++;
+  }
+  if(printable / v.length < 0.90) return false;
+  return /[A-Za-z]{4,}/.test(v) ||
+         /https?:\/\/|[\\/][A-Za-z][\w.-]{2,}|["'][\w-]+["']\s*:|\.[a-z]{2,6}\b/.test(v);
+}
+
 function autoDecodeStrings(strings, srcLabel){
   var out = [];
   var seen = {};
@@ -5004,8 +6364,9 @@ function autoDecodeStrings(strings, srcLabel){
     var s = strings[i];
     if(!s || s.length<6 || s.length>400) continue;
     if(seen[s]) continue; seen[s]=1;
+    if(!mfxAutoDecodeWorthTrying(s)) continue;
     var result = deobAll(s);
-    if(result.chain.length>0 && result.final.indexOf("(binary)")!==0){
+    if(result.chain.length>0 && mfxDecodedLooksMeaningful(result.final)){
       out.push({original:s, chain:result.chain, final:result.final, src:srcLabel});
     }
   }
@@ -5042,11 +6403,22 @@ function getAllStrings(){
     if(!f.isDecompiledSource) return;
     // Extract string literals from Java source text
     var text=f.text||"";
+    // The decoy suppression on the constant-pool path does not cover source
+    // from the decompile bridge, which is how "36FD90C192D7DB7425CF19B6" and
+    // the other unreachable-branch junk kept reaching the auto-decoder.
+    var srcDead = [];
+    try { srcDead = mfxSourceDeadRanges(text); } catch(e){ srcDead = []; }
     var strRe=/"((?:[^"\\]|\\.)*)"/g;
     var m, seen={};
     while((m=strRe.exec(text))!==null){
       var s=m[1];
       if(!s||s.length<2) continue;
+      var inDead=false;
+      for(var dr=0; dr<srcDead.length; dr++){
+        if(m.index>=srcDead[dr][0] && m.index<srcDead[dr][1]){ inDead=true; break; }
+        if(m.index < srcDead[dr][0]) break;
+      }
+      if(inDead) continue;
       var k="src::"+s;
       if(seen[k]) continue; seen[k]=1;
       all.push({v:s, src:path, type:"src_string"});
@@ -5269,6 +6641,23 @@ function threatScore(){
   // network and ships a lot of text.
   var hard = evidence.some(function(e){ return e.hard; });
   var capped = false;
+  // ---- Fuzzy code-fingerprint matching (v3.5.0) ----
+  // Folded in BEFORE the corroboration cap and the insecure-download pin
+  // below, so a match modifies the existing verdict rather than overriding it.
+  // A match against a known-GOOD build contributes NEGATIVE points: a
+  // near-copy of a legitimate mod is most likely that mod, and staying silent
+  // about that would leave repackaged-but-clean samples looking worse than
+  // they are.
+  if(window.Rho9Fuzzy){
+    var detect = Rho9Fuzzy.scoreContribution();
+    detect.notes.forEach(function(n){
+      score += n.points;
+      reasons.push(n.reason);
+      evidence.push({points:n.points, reason:n.reason, hard:!!n.hard});
+      if(n.hard) hard = true;
+    });
+  }
+
   score = Math.round(score);
   if(!hard && score >= 70){ score = 69; capped = true; reasons.push("capability only, no corroborating indicator"); }
 
@@ -5351,6 +6740,27 @@ function renderAll(){
   if(fl>0) document.getElementById("tb-flagged").classList.add("danger-tab");
   populateDeobPicker();
   switchTab("overview");
+
+  // Fire the bridge engines after the UI is already up. They are network
+  // calls to a local process and can take a second or two on a large jar, so
+  // they must never sit in front of the analyst seeing their results.
+  // Second pass: the bridge now holds the decompiled output for this job, so
+  // re-fingerprint to fold in the source half. Skipped when there is no job,
+  // because the first pass already covered that case.
+  if(window.Rho9Fuzzy && Rho9Fuzzy.supported() && S.lastSampleBytes && S.lastJobId){
+    Rho9Fuzzy.scanSample(S.lastSampleBytes, S.archiveName||"sample.jar", S.lastJobId)
+      .then(function(out){
+        var n = (out && out.matches) ? out.matches.length : 0;
+        setBadge("tb-fuzzy", n);
+        if(out && out.guess && out.guess.classification === "malware"){
+          document.getElementById("tb-fuzzy").classList.add("danger-tab");
+        }
+        Rho9Fuzzy.render();
+        // The score can move once the fingerprint lands, so redraw.
+        renderOverview();
+      })
+      .catch(function(){ /* optional; static analysis already succeeded */ });
+  }
 }
 
 function setBadge(id, n){
@@ -5828,7 +7238,7 @@ function filterStrings(){ var qEl=document.getElementById("strSearchGlobal"); va
 function toggleInlineDeobGlobal(row){ var s=row.dataset.s; if(!s) return; var existing=row.querySelector(".inline-deob-result"); if(existing){ existing.remove(); return; } var result=deobAll(s); var div=document.createElement("div"); div.className="inline-deob-result"; if(result.chain.length===0){ div.innerHTML="<span style=\"color:var(--text2);font-size:10px;\">No deobfuscation transformations applied.</span>"; } else { div.innerHTML="<div class=\"ideob-chain\">"+result.chain.map(function(c){ return "<span class=\"ideob-pass\">"+esc(c.pass)+"</span> &rarr; <span class=\"ideob-out\">"+esc(c.output.slice(0,500))+"</span>"; }).join("<br>")+"</div><div class=\"ideob-final\">Final: <strong>"+esc(result.final.slice(0,500))+"</strong></div>"; } row.appendChild(div); }
 
 // ---- IOC TAB ----
-function renderIOC(){ var el=document.getElementById("tp-ioc"); if(!S.iocs.length){ el.innerHTML="<div class=\"empty\">No IOCs detected</div>"; return; } var order={webhook:0,telegram_api:1,telegram_token:2,ip:3,payload_url:4,url:5,domain:6,crypto_wallet:7,path_win:8,path_unix:9,registry:10}; var sorted=S.iocs.slice().sort(function(a,b){ return (order[a.type]||9)-(order[b.type]||9); }); var h="<div class=\"toolbar\"><input class=\"tool-search\" placeholder=\"Search IOCs...\" oninput=\"filterIOCList(this)\"><span class=\"tool-count\">"+S.iocs.length+" IOCs</span></div><div id=\"iocListBody\">"; sorted.forEach(function(ioc){ var isWh=ioc.type==="webhook"; h+="<div class=\"ioc-full-row "+(isWh?"ioc-wh-row":"")+"\" data-q=\""+escAttr((ioc.type+" "+ioc.value+" "+ioc.source).toLowerCase())+"\"><div class=\"ioc-row-hdr\"><span class=\"ioc-type-badge ioc-"+ioc.type+"\">"+ioc.type.replace(/_/g," ").toUpperCase()+"</span><span class=\"ioc-src-badge\">"+esc(ioc.source.split("/").pop())+"</span></div><div class=\"ioc-full-val\">"+esc(ioc.value)+"</div><div class=\"ioc-full-src\">"+esc(ioc.source)+"</div>"; if(isWh){ h+="<div class=\"ioc-actions\"><button class=\"btn-action info\" data-u=\""+escAttr(ioc.value)+"\" onclick=\"fetchWhInfo(this.dataset.u)\">&#9432; Fetch Info</button><button class=\"btn-action kill\" data-u=\""+escAttr(ioc.value)+"\" onclick=\"confirmKill(this.dataset.u)\">&#10005; Kill Webhook</button></div>"; } h+="<div class=\"ioc-row-btns\"><button class=\"btn-micro\" onclick=\"sendToDeob(this.closest('.ioc-full-row').querySelector('.ioc-full-val').textContent)\">DEOB</button><button class=\"btn-micro\" onclick=\"copyText(this.closest('.ioc-full-row').querySelector('.ioc-full-val').textContent,this)\" title=\"Copy to clipboard\">COPY</button></div></div>"; }); h+="</div>"; el.innerHTML=h; }
+function renderIOC(){ var el=document.getElementById("tp-ioc"); if(!S.iocs.length){ el.innerHTML="<div class=\"empty\">No IOCs detected</div>"; return; } var order={webhook:0,telegram_api:1,telegram_token:2,ip:3,payload_url:4,url:5,domain:6,crypto_wallet:7,path_win:8,path_unix:9,registry:10}; var sorted=S.iocs.slice().sort(function(a,b){ return (order[a.type]||9)-(order[b.type]||9); }); var h="<div class=\"toolbar\"><input class=\"tool-search\" placeholder=\"Search IOCs...\" oninput=\"filterIOCList(this)\"><span class=\"tool-count\">"+S.iocs.length+" IOCs</span></div><div id=\"iocListBody\">"; sorted.forEach(function(ioc){ var isWh=ioc.type==="webhook"; h+="<div class=\"ioc-full-row "+(isWh?"ioc-wh-row":"")+"\" data-q=\""+escAttr((ioc.type+" "+ioc.value+" "+ioc.source).toLowerCase())+"\"><div class=\"ioc-row-hdr\"><span class=\"ioc-type-badge ioc-"+ioc.type+"\" title=\""+escAttr(ioc.subtypeReason||"")+"\">"+(ioc.subtype==="contract"?"CRYPTO CONTRACT":ioc.type.replace(/_/g," ").toUpperCase())+"</span><span class=\"ioc-src-badge\">"+esc(ioc.source.split("/").pop())+"</span></div><div class=\"ioc-full-val\">"+esc(ioc.value)+"</div><div class=\"ioc-full-src\">"+esc(ioc.source)+"</div>"; if(isWh){ h+="<div class=\"ioc-actions\"><button class=\"btn-action info\" data-u=\""+escAttr(ioc.value)+"\" onclick=\"fetchWhInfo(this.dataset.u)\">&#9432; Fetch Info</button><button class=\"btn-action kill\" data-u=\""+escAttr(ioc.value)+"\" onclick=\"confirmKill(this.dataset.u)\">&#10005; Kill Webhook</button></div>"; } h+="<div class=\"ioc-row-btns\"><button class=\"btn-micro\" onclick=\"sendToDeob(this.closest('.ioc-full-row').querySelector('.ioc-full-val').textContent)\">DEOB</button><button class=\"btn-micro\" onclick=\"copyText(this.closest('.ioc-full-row').querySelector('.ioc-full-val').textContent,this)\" title=\"Copy to clipboard\">COPY</button></div></div>"; }); h+="</div>"; el.innerHTML=h; }
 function filterIOCList(input){ var q=input.value.toLowerCase(); var rows=document.querySelectorAll(".ioc-full-row"); for(var i=0;i<rows.length;i++){ var dq=rows[i].dataset.q||""; rows[i].style.display=(!q||dq.indexOf(q)>=0)?"":"none"; } }
 
 // ---- FLAGGED TAB ----
@@ -6307,7 +7717,7 @@ function downloadReport(){
       '<div class="hdr-top-row">'+
         '<img class="logo-img" src="'+LOGO_URI+'" alt="Rho-9" style="height:38px;flex-shrink:0;">'+
         '<div class="hdr-info">'+
-          '<div class="hdr-title">ModForensics v3.4.0</div>'+
+          '<div class="hdr-title">ModForensics v3.5.1</div>'+
           '<div class="hdr-sub">Minecraft Mod Malware Forensics &middot; Rho-9 Systems</div>'+
         '</div>'+
       '</div>'+
@@ -6400,6 +7810,13 @@ function rho9SerializeReport(){
     // File objects aren't serializable and wouldn't survive a reload anyway --
     // keep id/name only so a restored session can still show what was loaded.
     loadedFiles: (S.loadedFiles||[]).map(function(lf){ return {id:lf.id, name:lf.name}; }),
+    // v3.5.0: the fingerprint result and everything derived from it. Without
+    // this a restored session lost its hash results, its triage verdict, and
+    // the score contribution that came with them, so a restored scan silently
+    // read lower than the same scan before the refresh.
+    fuzzy: S.fuzzy || null,
+    lastJobId: S.lastJobId || null,
+    fuzzyFlags: (window.Rho9Fuzzy && Rho9Fuzzy.exportFormState) ? Rho9Fuzzy.exportFormState() : null,
     savedAt: Date.now()
   };
 }
@@ -6411,6 +7828,9 @@ function rho9RestoreReport(data){
   S.archiveName = data.archiveName || null;
   S.activeFile = data.activeFile || null;
   S.loadedFiles = data.loadedFiles || [];
+  S.fuzzy = data.fuzzy || null;
+  S.lastJobId = data.lastJobId || null;
+  if(window.Rho9Fuzzy && data.fuzzyFlags) Rho9Fuzzy.importFormState(data.fuzzyFlags);
   document.getElementById("welcomeScreen").style.display = "none";
   document.getElementById("mainUI").style.display = "flex";
   renderAll();
@@ -6533,6 +7953,10 @@ async function resolveEncryptedZip(buf){
   var retry = false;
   while(true){
     var pw = await promptZipPassword(retry);
+    // Keep it for the fingerprinter: the bridge has to open the same archive,
+    // and without the password it saw an unreadable file and called it a
+    // deliberately malformed one.
+    if(pw) S.archivePassword = pw;
     if(pw === null) return null; // user cancelled
     try{
       return await decryptZipToPlainBuffer(buf, pw);
@@ -6596,6 +8020,20 @@ function rho9OfferSessionRestore(data){
   window._rho9SaveCache=async function(){ await saveCache(); var d=await loadCache(); fullUpdatePill(d); if(Rho9Bridge.isReady()) Rho9Bridge.saveSession(rho9SerializeReport()); };
   window.showCacheSummary=async function(){ var d=await loadCache(); if(!d){ showInfoModal('Cache','<div class="err-box">No cache data available.</div>'); return; } var body='<div style="font-family:var(--mono);font-size:11px;line-height:1.8;">'; body+='<div><span style="color:var(--text2);">File:</span> '+esc(d.archiveName||'unknown')+'</div>'; body+='<div><span style="color:var(--text2);">IOCs:</span> '+(d.iocCount||0)+'</div>'; body+='<div><span style="color:var(--text2);">Classes:</span> '+(d.classCount||0)+'</div>'; body+='<div><span style="color:var(--text2);">Files:</span> '+(d.fileCount||0)+'</div>'; body+='<div><span style="color:var(--text2);">Saved:</span> '+new Date(d.savedAt).toLocaleString()+'</div>'; body+='</div><div style="margin-top:10px;font-size:10px;color:var(--text2);">Cache stores session metadata only.</div>'; showInfoModal('Session Cache Summary',body); };
   window.doClearCache=function(){ clearCache(); fullUpdatePill(null); setStatus('Session cache cleared.'); };
+  // Debounced re-save, used by anything that changes state worth keeping
+  // (currently the fuzzy fingerprint and the classification form).
+  var _persistT = null;
+  window.rho9PersistSession = function(){
+    if(_persistT) clearTimeout(_persistT);
+    _persistT = setTimeout(function(){
+      _persistT = null;
+      try{
+        if(!S.archiveName) return;
+        saveCache();
+        if(Rho9Bridge.isReady()) Rho9Bridge.saveSession(rho9SerializeReport());
+      }catch(e){}
+    }, 800);
+  };
 })();
 
 // ---- EVENT WIRING ----
@@ -6878,7 +8316,40 @@ function rho9OfferSessionRestore(data){
 
 // Initial bridge scan on load, so the pill reflects real status without
 // needing the user to open the settings panel first.
-Rho9Bridge.scan().then(function(){ rho9HandleSessionOnLoad(); if(window.Rho9Intel) Rho9Intel.refreshBadge(); });
+// The bridge may not answer on the first probe: it can still be starting, or
+// the page may have been restored from the back/forward cache with no probe
+// having run at all. Keep looking for a short while, and react if it comes up
+// later, instead of deciding once at load that there is nothing to restore.
+(function rho9BridgeBootstrap(){
+  var handled = false;
+  function tryHandle(){
+    if(handled) return;
+    handled = true;
+    rho9HandleSessionOnLoad();
+    if(window.Rho9Intel) Rho9Intel.refreshBadge();
+  }
+  window.addEventListener("rho9-bridge-online", tryHandle);
+  Rho9Bridge.scan().then(function(url){
+    if(url) return tryHandle();
+    var tries = 0;
+    var t = setInterval(function(){
+      if(handled || ++tries > 12){ clearInterval(t); if(!handled) tryHandle(); return; }
+      Rho9Bridge.scan().then(function(u){ if(u){ clearInterval(t); tryHandle(); } });
+    }, 1200);
+  });
+  // A bfcache restore fires pageshow with persisted=true and runs no init at
+  // all, which left the page showing a stale BRIDGE: OFFLINE pill and no
+  // restore offer until a manual reload.
+  window.addEventListener("pageshow", function(e){
+    if(!e.persisted) return;
+    handled = false;
+    Rho9Bridge.scan().then(function(u){ if(u) tryHandle(); });
+  });
+  // Coming back to the tab after the bridge was started elsewhere.
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible" && !Rho9Bridge.isFound()) Rho9Bridge.scan();
+  });
+})();
 
 // ---- Sparse Rho-9 shop promo ----
 // Deliberately low-frequency so it is never pesky: at most one eligible roll per
@@ -6927,6 +8398,939 @@ Rho9Bridge.scan().then(function(){ rho9HandleSessionOnLoad(); if(window.Rho9Inte
   }
   setTimeout(build, DELAY_MS);
 })();
+
+// ============================================================================
+// FUZZY MATCHING (v3.5.0) -- code fingerprints, three sets, rapid triage
+//
+// Replaces the rule-scanning approach. Tested against a real corpus of
+// Minecraft mod malware, public rule feeds scored on 1 of 9 malicious samples
+// while code fingerprints linked families across package renaming AND full
+// recompilation, with zero byte-identical class files between them.
+//
+// Everything here is OPTIONAL and runs on the local bridge. With no bridge,
+// every function no-ops and static analysis is untouched.
+//
+// THREE SETS, because "not malware" and "safe to run" are different questions:
+//   goodware  known safe
+//   badware   not malicious but not safe practice: cleartext update channels,
+//             unsigned self-updaters, sloppy permissions
+//   malware   actively malicious
+// ============================================================================
+
+var Rho9Fuzzy = (function(){
+  var state = { scan:null, status:null, flags:null, running:false, error:null,
+                lastArtifact:null, selectedTags:{}, classification:3,
+                stageId:null, stagedFor:null, sampleKey:null,
+                userTicked:{}, userUnticked:{}, dirty:false };
+
+  function caps(){ return (Rho9Bridge.getCaps && Rho9Bridge.getCaps()) || {}; }
+  function supported(){
+    var f = caps().fuzzy;
+    return !!(Rho9Bridge.isFound() && f && !f.disabled);
+  }
+  function bridgeUrl(){ return Rho9Bridge.getUrl ? Rho9Bridge.getUrl() : null; }
+
+  async function call(path, body, extra){
+    var url = bridgeUrl();
+    if(!url) throw new Error("bridge not connected");
+    var headers = { "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE };
+    if(extra) for(var k in extra) headers[k] = extra[k];
+    var resp = await fetch(url+path, { method:"POST", headers:headers, body:body });
+    var text = await resp.text(), json = null;
+    try{ json = text ? JSON.parse(text) : null; }catch(e){}
+    if(!resp.ok) throw new Error((json && json.error) ? json.error : ("HTTP "+resp.status));
+    return json;
+  }
+  async function fetchJson(path){
+    var url = bridgeUrl();
+    if(!url) return null;
+    try{
+      var r = await fetch(url+path, { headers:{ "X-Rho9-Purpose": RHO9_BRIDGE_PURPOSE }, cache:"no-store" });
+      return r.ok ? await r.json() : null;
+    }catch(e){ return null; }
+  }
+
+  // ---- rapid triage -------------------------------------------------------
+
+  // Runs against the RAW jar before the decompiler is invoked. The whole point
+  // is a provisional family name in milliseconds while the JVM is still
+  // starting; it never replaces the full analysis, and the UI labels it as
+  // provisional everywhere it appears.
+  async function scanSample(bytes, filename, jobId){
+    if(!supported() || !bytes) return null;
+    state.running = true; state.error = null;
+    try{ if(isVisible()) render(); }catch(e){}
+    try{
+      // Passing the job id makes the bridge fold the decompiled source it is
+      // already holding into the fingerprint, so the sample gets BOTH halves:
+      // opcode digests and source digests. Without it, a decompiled-source
+      // archive of this same jar could never match it at full strength later.
+      var q = "/rho9/fuzzy/scan" + (jobId ? ("?job_id="+encodeURIComponent(jobId)) : "");
+      if(S.archivePassword){
+        q += (q.indexOf("?") >= 0 ? "&" : "?") + "password=" + encodeURIComponent(S.archivePassword);
+      }
+      var r = await call(q, bytes, {
+        "Content-Type":"application/octet-stream",
+        "X-Filename": encodeURIComponent(filename||"sample.jar")
+      });
+      // S.fuzzy is the single source of truth (it is what gets serialised
+      // into the saved session); state.scan was a second copy that could
+      // drift after a restore.
+      S.fuzzy = r;
+      // A new sample invalidates anything staged for the previous one.
+      state.stageId = null; state.stagedFor = null;
+      // Fill the flags NOW. Waiting until the panel renders meant the boxes
+      // were only ever populated if the analyst opened the tab, and if the
+      // codebook had not finished loading at that moment they stayed empty.
+      try{ autoFill(); }catch(e){}
+      // The static analysis can still be turning up families after the
+      // fingerprint lands, so keep topping the flags up for a few seconds
+      // instead of trusting a single snapshot.
+      var passes = 0;
+      var top = setInterval(function(){
+        if(++passes > 25){ clearInterval(top); return; }
+        try{ autoFill(); if(isVisible()) render(); }catch(e){}
+      }, 900);
+      // Push the fingerprint into the saved session straight away. Waiting for
+      // an explicit save meant a refresh threw the hash result away even
+      // though the bridge was right there holding the session.
+      try{ if(window.rho9PersistSession) window.rho9PersistSession(); }catch(e){}
+      return r;
+    }catch(e){
+      // An archive with no bytecode at all (a decompiled-source zip, a
+      // resource pack) legitimately has no fingerprint. Not worth an alarm.
+      if(!/nothing fingerprintable/i.test(e.message||"")) state.error = e.message;
+      S.fuzzy = null;
+      return null;
+    }finally{
+      state.running = false;
+    }
+  }
+
+  async function refreshStatus(){
+    state.status = await fetchJson("/rho9/fuzzy/status");
+    if(!state.flags) state.flags = await fetchJson("/rho9/fuzzy/flags");
+    // The codebook may have arrived after the scan did, so try again now that
+    // we can actually map family names onto tag numbers.
+    try{ autoFill(); }catch(e){}
+    return state.status;
+  }
+
+  // Pull the codebook up front so the flags are ready before the first scan
+  // finishes, rather than racing it.
+  // The bridge coming online mid-session changes readiness from "offline" to
+  // "ready", so the panel has to hear about it.
+  try{
+    window.addEventListener("rho9-bridge-online", function(){
+      refreshStatus().then(function(){ try{ render(); }catch(e){} });
+    });
+  }catch(e){}
+
+  (function primeCodebook(){
+    var tries = 0;
+    var t = setInterval(function(){
+      if(++tries > 40){ clearInterval(t); return; }
+      if(!supported()) return;
+      clearInterval(t);
+      refreshStatus().catch(function(){});
+    }, 750);
+  })();
+
+  // ---- score contribution -------------------------------------------------
+
+  function scoreContribution(){
+    var points = 0, notes = [];
+    var d = S.fuzzy;
+    if(d && typeof d.score_modifier === "number" && d.score_modifier !== 0){
+      var m = d.score_modifier;
+      var best = m > 0 ? (d.best.malware || d.best.badware) : d.best.goodware;
+      if(best){
+        points += m;
+        notes.push({
+          points: m,
+          reason: (m > 0
+              ? "code fingerprint matches a known " + best.set + " sample"
+              : "code fingerprint matches a known-good build") +
+            " (" + best.verdict + ", " + Math.round(best.score*100) + "% similar to " +
+            esc(best.filename || best.sha256.slice(0,12)) + ")",
+          // A near-identical or embedded-payload match against a confirmed
+          // malicious sample is direct evidence, not a capability hint.
+          hard: m > 0 && (best.verdict === "same build or trivial repack" ||
+                          best.verdict === "embedded payload matches")
+        });
+      }
+    }
+    return { points:points, notes:notes };
+  }
+
+  // ---- readiness ----------------------------------------------------------
+  //
+  // Hashing needs three things lined up: a connected bridge, a sample the
+  // bridge can actually reach, and a finished fingerprint. Any of them can be
+  // missing for perfectly ordinary reasons, and the buttons used to be live
+  // regardless, so pressing one early produced a bare "No sample loaded" that
+  // told the analyst nothing about which piece was missing or whether waiting
+  // would fix it.
+  //
+  // The restored-session case is the nastiest of the three: raw bytes are not
+  // serialisable, so after a refresh the panel shows a complete analysis while
+  // holding no file at all. If the bridge still has the decompile job we can
+  // work from that; if it was restarted, the only honest answer is to say the
+  // file has to be loaded again.
+  function readiness(){
+    if(!Rho9Bridge.isFound()){
+      return { ready:false, phase:"no-bridge", waiting:false,
+               msg:"Bridge offline. Hashing runs on the local bridge; start it and this panel will pick it up automatically." };
+    }
+    if(!supported()){
+      return { ready:false, phase:"old-bridge", waiting:false,
+               msg:"This bridge does not provide fuzzy matching. Update it to v1.2.0 or later." };
+    }
+    if(!S.archiveName){
+      return { ready:false, phase:"no-sample", waiting:false,
+               msg:"No sample loaded yet. Drop a mod file to begin." };
+    }
+    if(state.running){
+      return { ready:false, phase:"scanning", waiting:true,
+               msg:"Fingerprinting " + esc(S.archiveName) + "..." };
+    }
+    if(!S.lastSampleBytes && !S.lastJobId){
+      return { ready:false, phase:"bytes-lost", waiting:false,
+               msg:"This analysis was restored from a saved session, which does not carry the "+
+                   "original file. Load " + esc(S.archiveName) + " again to generate a hash file." };
+    }
+    if(!S.fuzzy){
+      return { ready:false, phase:"no-fingerprint", waiting:true,
+               msg:"Waiting for the fingerprint. If this sticks, re-open this tab to retry." };
+    }
+    return { ready:true, phase:"ready", waiting:false,
+             msg:"Ready" + (S.lastJobId ? " (the bridge already holds this sample)" :
+                            (state.stageId ? " (sample staged)" : "")) };
+  }
+
+  function readinessBanner(){
+    var r = readiness();
+    if(r.ready) return '';
+    var colour = r.waiting ? "var(--amber)" : "var(--text2)";
+    return '<div class="err-box" style="border-color:'+colour+';color:'+colour+'">'+
+           (r.waiting ? "&#8987; " : "") + r.msg + '</div>';
+  }
+
+  // ---- rendering ----------------------------------------------------------
+
+  // esc() collapses falsy values to "" (it is String(s||"")), so a numeric 0
+  // renders as an empty cell. Counts go through num() instead, which keeps
+  // the zero: "0 classes" and "" mean very different things in a report.
+  function num(v){ return esc(String(v == null ? 0 : v)); }
+
+  function pill(text, colour){
+    // nowrap matters more than it looks: inside a narrow table cell on a
+    // phone this pill wrapped one character per line and rendered "malware"
+    // as a vertical column of letters.
+    return '<span class="fz-pill" style="border-color:'+colour+';color:'+colour+'">'+
+           esc(text)+'</span>';
+  }
+  function setColour(s){
+    return s==="malware" ? "var(--red)" : s==="badware" ? "var(--amber)" :
+           s==="goodware" ? "var(--green)" : "var(--fg)";
+  }
+
+  function renderTriage(){
+    var d = S.fuzzy;
+    if(!d) return '<div class="intel-note">No sample fingerprinted yet.</div>';
+    var g = d.guess || {};
+    var sig = d.signature || {};
+    var h = '';
+
+    var bomb = d.bomb || sig.bomb;
+    if(bomb){
+      var kinds = { zipBomb: "decompression bomb", parserBomb: "parser bomb",
+                    malformedArchive: "deliberately malformed archive" };
+      var det = bomb.detail || {};
+      h += '<div class="card" style="border-color:var(--red)">'+
+           '<div class="card-title" style="color:var(--red)">Archive defence tripped</div>'+
+           '<div>'+bomb.types.map(function(t){ return pill(kinds[t]||t, "var(--red)"); }).join(" ")+'</div>'+
+           '<div class="intel-note" style="margin-top:8px">This archive is built to break the '+
+           'tools that open it. It was contained rather than parsed, so nothing inside it ran '+
+           'and nothing expanded.</div>';
+      if(det.kind) h += '<div class="info-row"><span class="info-key">mechanism</span><span class="info-val">'+esc(det.kind)+'</span></div>';
+      if(det.overall_ratio) h += '<div class="info-row"><span class="info-key">compression ratio</span><span class="info-val">'+num(det.overall_ratio)+':1</span></div>';
+      if(det.nested_archives) h += '<div class="info-row"><span class="info-key">nested archives</span><span class="info-val">'+num(det.nested_archives)+'</span></div>';
+      if(det.largest_class_bytes) h += '<div class="info-row"><span class="info-key">largest class</span><span class="info-val">'+(det.largest_class_bytes/1048576).toFixed(2)+' MB</span></div>';
+      if(det.read_failures) h += '<div class="info-row"><span class="info-key">unreadable entries</span><span class="info-val">'+num(det.read_failures)+'</span></div>';
+      if(sig.mode === "container"){
+        h += '<div class="intel-note" style="margin-top:8px">Nothing inside could be read safely, '+
+             'so the fingerprint is of the archive itself. That is the right artefact here: two '+
+             'people handed the same weaponised archive receive the same bytes.</div>';
+      }
+      h += '</div>';
+    }
+
+    h += '<div class="card"><div class="card-title">Rapid triage '+
+         pill("provisional", "var(--amber)")+'</div>';
+    if(g.classification && g.classification !== "unknown"){
+      h += '<div style="font-size:20px;margin:6px 0">'+
+           pill(g.classification.toUpperCase(), setColour(g.classification))+
+           ' <span class="mono" style="font-size:13px">confidence '+
+           Math.round((g.confidence||0)*100)+'%</span></div>';
+      if((g.tags||[]).length){
+        h += '<div style="margin:6px 0">'+g.tags.map(function(t){
+          return pill(t, "var(--fg)"); }).join(" ")+'</div>';
+      }
+      h += '<div class="info-row"><span class="info-key">compact code</span><b class="mono">'+esc(g.code)+'</span></div>';
+      h += '<div class="intel-note" style="margin-top:6px">This is a guess from similar '+
+           'samples, produced in '+num(d.duration_ms||0)+' ms without decompiling. '+
+           'The full static analysis is authoritative.</div>';
+    } else {
+      h += '<div class="intel-note">'+esc(g.reason || "Nothing in the sets resembles this sample.")+
+           ' That is the expected result for anything you have not filed a relative of.</div>';
+    }
+    h += '</div>';
+
+    h += '<div class="card"><div class="card-title">Fingerprint</div>';
+    if(sig.source && sig.mode === "bytecode+source"){
+      h += '<div class="info-row"><span class="info-key">mode</span><span class="info-val">bytecode + source ('+
+           num(sig.source.files)+' decompiled files)</span></div>'+
+           '<div class="intel-note">Both halves are fingerprinted, so this sample will '+
+           'match a decompiled-source archive of itself at full strength, not just '+
+           '"possibly related".</div>';
+    }
+    if(sig.mode === "source"){
+      h += '<div class="info-row"><span class="info-key">mode</span><span class="info-val">decompiled source ('+
+           num(sig.classes_parsed||0)+' .java files)</span></div>'+
+           '<div class="intel-note">This archive has no bytecode, so the fingerprint is '+
+           'built from normalised source. It compares fully against other source '+
+           'archives; against compiled jars only the API surface is comparable, and '+
+           'those matches are capped at "possibly related".</div>';
+    } else {
+      h += '<div class="info-row"><span class="info-key">own classes</span><span class="info-val">'+num(sig.classes_parsed||0)+'</span></div>';
+    }
+    if(sig.nested_count){
+      h += '<div class="info-row"><span class="info-key">embedded jars</span><span class="info-val">'+num(sig.nested_count)+
+           ' ('+num(sig.nested_classes||0)+' classes)</span></div>';
+    }
+    h += '<div class="info-row"><span class="info-key">no bytecode (interfaces, constants)</span><span class="info-val">'+num(sig.classes_no_code||0)+'</span></div>';
+    h += '<div class="info-row"><span class="info-key">unparseable</span><span class="info-val">'+num(sig.classes_unparsed||0)+'</span></div>';
+    h += '<div class="info-row"><span class="info-key">external API calls</span><span class="info-val">'+num(sig.api_count||0)+'</span></div>';
+    h += '<div class="info-row"><span class="info-key">compared against</span><span class="info-val">'+num(d.compared_against||0)+' filed signatures</span></div>';
+    h += '</div>';
+
+    var ms = d.matches || [];
+    h += '<div class="card"><div class="card-title">Nearest matches</div>';
+    if(!ms.length){
+      h += '<div class="intel-note">Nothing above the similarity threshold.</div>';
+    } else {
+      h += '<table class="ev-table"><thead><tr><th>sample</th><th>set</th><th>score</th>'+
+           '<th>overlap</th><th>verdict</th></tr></thead><tbody>';
+      ms.forEach(function(m){
+        h += '<tr><td class="mono" data-l="sample">'+esc(m.filename||m.sha256.slice(0,16))+'</td>'+
+             '<td data-l="set">'+pill(m.set, setColour(m.set))+'</td>'+
+             '<td class="mono" data-l="score">'+(m.score*100).toFixed(1)+'%</td>'+
+             '<td class="mono" data-l="overlap">'+(Math.max(m.class_overlap,m.containment)*100).toFixed(1)+'%</td>'+
+             '<td data-l="verdict">'+esc(m.verdict)+(m.matched_on ? ' <span class="intel-note">('+esc(m.matched_on)+')</span>' : '')+'</td></tr>';
+        if(m.nested_match){
+          h += '<tr><td colspan="5" class="intel-note" style="padding-left:16px">matched at '+
+               esc(m.nested_match.left)+' against '+esc(m.nested_match.right)+
+               ' ('+esc(m.nested_match.shared)+' shared classes)</td></tr>';
+        }
+      });
+      h += '</tbody></table>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function renderFiling(){
+    if(!state.flags) return '<div class="intel-note">Loading the flag codebook...</div>';
+    autoFill();
+    var tags = state.flags.tags || {};
+    var h = '<div class="card"><div class="card-title">Classify and file this sample</div>';
+    h += '<div class="intel-note" style="margin-bottom:8px">Filing a sample teaches the '+
+         'bridge. Goodware matches subtract from the threat score, so a well-fed '+
+         'goodware set is what keeps false positives down.</div>';
+
+    h += '<div style="margin-bottom:8px"><b>Set</b><br>';
+    ["goodware","badware","malware"].forEach(function(s){
+      var on = state.classification === ({goodware:1,badware:2,malware:3})[s];
+      h += '<label style="margin-right:14px;cursor:pointer">'+
+           '<input type="radio" name="fuzzySet" value="'+s+'"'+(on?' checked':'')+
+           ' onchange="Rho9Fuzzy.setClass(\''+s+'\')"> '+
+           pill(s, setColour(s))+'</label>';
+    });
+    h += '<div class="intel-note" style="margin-top:4px">badware means insecure rather '+
+         'than malicious: cleartext HTTP update channels, unsigned self-updaters, '+
+         'and similar.</div></div>';
+
+    // Premade flags. Tags 1-21 mirror the static analyser's own SIGS families,
+    // so anything the engine can raise has a checkbox here; 22+ are behaviour
+    // classifications an analyst assigns.
+    var detected = detectedFamilies();
+    h += '<div style="margin-bottom:8px"><div class="fz-btnrow" style="align-items:center">'+
+         '<b>Flags</b>';
+    if(detected.length){
+      // Report what is actually ticked, not what was detected. The old label
+      // said "8 pre-ticked from this scan" beside two ticked boxes.
+      var tickedNow = Object.keys(state.selectedTags||{}).length;
+      h += '<span class="intel-note">'+num(tickedNow)+' ticked, '+
+           num(detected.length)+' raised by this scan</span>'+
+           '<button class="btn-micro" onclick="Rho9Fuzzy.applyDetected()">Re-apply</button>'+
+           '<button class="btn-micro" onclick="Rho9Fuzzy.clearTags()">Clear all</button>';
+    }
+    h += '</div>';
+    h += '<div style="max-height:180px;overflow:auto;border:1px solid var(--line,#333);'+
+         'padding:6px;margin-top:6px;border-radius:4px">';
+    Object.keys(tags).sort(function(a,b){ return a-b; }).forEach(function(id){
+      var name = tags[id], on = !!state.selectedTags[id];
+      var isDetected = detected.indexOf(name) >= 0;
+      h += '<label class="fz-flag">'+
+           '<input type="checkbox"'+(on?' checked':'')+
+           ' onchange="Rho9Fuzzy.toggleTag('+id+',this.checked)"> '+
+           '<span class="mono">'+num(id)+'</span> '+esc(name)+
+           (isDetected ? ' <span style="color:var(--amber)">*</span>' : '')+'</label>';
+    });
+    h += '</div><div class="intel-note" style="margin-top:4px">* raised by this scan. '+
+         'Compact code: classification first, then tag numbers, e.g. '+
+         '<span class="mono">3:9+22</span> is malware, remote loader plus stealer.</div></div>';
+
+    h += '<input id="fuzzyFamily" class="tool-search" placeholder="family name (optional)" style="margin-bottom:6px">';
+    h += '<input id="fuzzyNote" class="tool-search" placeholder="note (optional)" style="margin-bottom:6px">';
+    h += '<label style="display:block;margin-bottom:8px;font-size:12px;cursor:pointer">'+
+         '<input type="checkbox" id="fuzzyIncludeReport" checked> include a fuzzy hash of the JSON report</label>';
+
+    var rdy = readiness();
+    var dis = rdy.ready ? '' : ' disabled style="opacity:.45;cursor:not-allowed"';
+    h += readinessBanner();
+    h += '<div class="fz-btnrow"><button class="btn-action"'+dis+' onclick="Rho9Fuzzy.testFile()">Check before filing</button> '+
+         '<button class="btn-action"'+dis+' onclick="Rho9Fuzzy.generate(false)">Generate hash file</button> '+
+         '<button class="btn-action"'+dis+' onclick="Rho9Fuzzy.generate(true)">Generate and file</button></div>';
+    if(rdy.ready && S.lastSampleBytes && !S.lastJobId && S.lastSampleBytes.byteLength > 4*1024*1024){
+      h += '<div class="intel-note">This sample is '+
+           (S.lastSampleBytes.byteLength/1048576).toFixed(1)+
+           ' MB and will be uploaded to the bridge once, the first time you press one of these.</div>';
+    }
+    h += '<div id="fuzzyFileResult" style="margin-top:8px"></div>';
+    h += '</div>';
+
+    if(state.lastArtifact){
+      h += '<div class="card"><div class="card-title">Shareable hash file</div>'+
+           '<div class="intel-note" style="margin-bottom:8px">Compact and inert, so sharing it '+
+           'moves detection without moving an executable. It is <b>not</b> anonymised: '+
+           'fuzzy hashes leak structure and anyone holding a candidate sample can confirm '+
+           'a match against it.</div>'+
+           '<textarea id="fuzzyArtifactBox" class="mono" readonly style="width:100%;height:110px">'+
+           esc(JSON.stringify(state.lastArtifact))+'</textarea>'+
+           '<div class="fz-btnrow">'+
+           '<button class="btn-action" onclick="Rho9Fuzzy.downloadArtifact()">Download .json</button> '+
+           '<button class="btn-action" onclick="Rho9Fuzzy.copyArtifact()">Copy</button></div></div>';
+    }
+    return h;
+  }
+
+  function renderSets(){
+    var st = state.status;
+    var h = '<div class="card"><div class="card-title">Sets</div>';
+    if(!st){ h += '<div class="intel-note">Not available.</div></div>'; return h; }
+    ["goodware","badware","malware"].forEach(function(s){
+      h += '<div class="info-row"><span class="info-key">'+pill(s, setColour(s))+'</span><span class="info-val">'+
+           num(st.counts[s])+' signatures'+
+           (st.samples_on_disk && st.samples_on_disk[s] ? ' ('+st.samples_on_disk[s]+' samples on disk)' : '')+
+           '</span></div>';
+    });
+    h += '<div class="info-row"><span class="info-key">malware sample bytes kept on disk</span><span class="info-val">'+
+         (st.keep_samples ? "yes" : "no (signatures only)")+'</span></div>';
+    h += '<div class="info-row"><span class="info-key">page / bridge</span><span class="info-val">v3.5.1 / v'+
+         esc(bridgeVersion())+(bridgeTooOld() ? ' <span style="color:var(--red)">(update the bridge)</span>' : '')+
+         '</span></div>';
+    if(!st.tlsh) h += '<div class="intel-note">py-tlsh missing: matching runs on class digests and API surface only.</div>';
+    h += '</div>';
+    return h;
+  }
+
+  // Import lives in its own card at the TOP of the panel. Buried at the
+  // bottom of the Sets card it was effectively invisible, and importing other
+  // people's detections is the entire point of a shareable hash file.
+  function renderImport(){
+    var st = state.status || {};
+    var counts = st.counts || {goodware:0, badware:0, malware:0, total:0};
+    var h = '<div class="card"><div class="card-title">Import and export detections</div>';
+    h += '<div class="intel-note" style="margin-bottom:10px">Load hash files other '+
+         'analysts have shared. A single <b>.json</b> hash file, or a <b>.zip</b> pack '+
+         'of many. Each is verified against its own self hash and rejected if it was '+
+         'altered in transit.</div>';
+    h += '<input type="file" id="fuzzyImportInput" accept=".json,.zip,application/json,application/zip" '+
+         'style="display:none" onchange="Rho9Fuzzy.importFile(this)">';
+    h += '<div class="fz-btnrow">'+
+         '<button class="btn-action" onclick="document.getElementById(\'fuzzyImportInput\').click()">'+
+         'Import .json or .zip</button>'+
+         '<button class="btn-action" onclick="Rho9Fuzzy.exportAll()">Export all ('+
+         num(counts.total)+')</button>'+
+         '<button class="btn-micro" onclick="Rho9Fuzzy.exportSet(\'goodware\')">export goodware</button>'+
+         '<button class="btn-micro" onclick="Rho9Fuzzy.exportSet(\'badware\')">export badware</button>'+
+         '<button class="btn-micro" onclick="Rho9Fuzzy.exportSet(\'malware\')">export malware</button>'+
+         '</div>';
+    h += '<div id="fuzzyImportResult" style="margin-top:8px"></div>';
+    h += '</div>';
+    return h;
+  }
+
+  // Is the panel actually on screen? Building this markup costs about 10 KB
+  // of string work and a full innerHTML swap, and it was running on every
+  // state change including while the tab was hidden and the main thread was
+  // busy parsing thousands of classes. Hidden renders are deferred to the
+  // moment the tab is opened.
+  function isVisible(){
+    var el = document.getElementById("tp-fuzzy");
+    return !!(el && el.classList.contains("active"));
+  }
+
+  function render(){
+    var el = document.getElementById("tp-fuzzy");
+    if(el && !isVisible()){ state.dirty = true; return; }
+    state.dirty = false;
+    if(!el) return;
+    if(!Rho9Bridge.isFound()){
+      el.innerHTML = '<div class="card"><div class="card-title">Fuzzy matching</div>'+
+        '<div class="intel-note">Code fingerprinting runs on the local bridge. Start the '+
+        'bridge to enable rapid triage, the three sample sets, and shareable hash '+
+        'files. Static analysis works without it.</div></div>';
+      return;
+    }
+    if(!supported()){
+      el.innerHTML = '<div class="card"><div class="card-title">Fuzzy matching</div>'+
+        '<div class="intel-note">The connected bridge does not provide fuzzy matching. '+
+        'Update the bridge to v1.2.0 or later.</div></div>';
+      return;
+    }
+    var h = '';
+    if(state.error) h += '<div class="err-box">'+esc(state.error)+'</div>';
+    if(state.running) h += '<div class="intel-note">Fingerprinting...</div>';
+    h += renderImport();
+    h += '<div class="card-title" style="margin-top:14px">Triage</div>';
+    h += renderTriage();
+    h += '<div class="card-title" style="margin-top:14px">Filing</div>' + renderFiling();
+    h += '<div class="card-title" style="margin-top:14px">Sets</div>' + renderSets();
+    el.innerHTML = h;
+  }
+
+  // ---- actions ------------------------------------------------------------
+
+  // Map the static analyser's own findings onto codebook tag names, so the
+  // premade flags start from what the scan actually raised instead of an
+  // empty form.
+  //
+  // The authoritative list is threatScore().families -- the same names the
+  // dashboard shows -- plus the per-file sig hits. An earlier version read
+  // S.files[x].flags, which does not exist on file records, so nothing was
+  // ever detected and every checkbox came up blank.
+  function detectedFamilies(){
+    var out = [];
+    function put(n){ if(n && out.indexOf(n) < 0) out.push(n); }
+    // Anything the bridge itself flagged: bomb types, and the auto
+    // classification applied to an archive that could not be parsed.
+    try{
+      var fz = S.fuzzy || {};
+      ((fz.signature||{}).suggested_tags || []).forEach(put);
+      var autoC = (fz.signature||{}).auto_classification;
+      if(autoC) (autoC.tags||[]).forEach(put);
+      if(fz.guess && fz.guess.from_bomb) (fz.guess.tags||[]).forEach(put);
+    }catch(e){}
+    var ts = null;
+    try{ ts = threatScore(); }catch(e){}
+    if(ts){
+      (ts.families||[]).forEach(put);
+      // An insecure cleartext download is not a SIGS family but it is exactly
+      // what the badware set exists for, so surface it as a flag.
+      if(ts.insecureDownload) put("insecureTransport");
+    }
+    try{
+      Object.keys(S.files||{}).forEach(function(k){
+        (S.files[k].sigs||[]).forEach(function(hit){
+          put(typeof hit === "string" ? hit : (hit && (hit.family || hit.sig || hit.name)));
+        });
+      });
+    }catch(e){}
+    if(state.flags && state.flags.tags){
+      var known = {};
+      Object.keys(state.flags.tags).forEach(function(id){ known[state.flags.tags[id]] = true; });
+      out = out.filter(function(n){ return known[n]; });
+    }
+    return out;
+  }
+
+  // Pre-tick what the scan raised, and preselect the set from the evidence.
+  //
+  // ADDITIVE, not once-and-done. The previous version filled once per sample
+  // and then refused to run again, which broke on exactly the samples that
+  // matter: a large archive finishes its code fingerprint in about a second
+  // while the static analysis is still turning up families, so the one and
+  // only pass caught whatever happened to exist at that instant. Measured on
+  // a 5,000-entry sample, six families were detected and two were ticked.
+  //
+  // Now every pass adds newly detected flags, and the analyst's own edits are
+  // remembered separately: a box you unticked stays unticked even if the
+  // scan keeps reporting it, and a box you ticked is never removed.
+  function autoFill(){
+    if(!state.flags || !state.flags.tags) return;
+    if(!S || !S.archiveName) return;
+    var key = (S.archiveName || "") + "|" + ((S.fuzzy && S.fuzzy.signature) ? S.fuzzy.signature.sha256 : "");
+    if(state.sampleKey !== key.split("|")[0]){
+      // Genuinely a different sample: start clean.
+      state.sampleKey = key.split("|")[0];
+      state.selectedTags = {};
+      state.userUnticked = {};
+      state.userTicked = {};
+    }
+    var names = detectedFamilies(), tags = state.flags.tags;
+    if(!names.length) return;
+    state.autoFilledFor = key;
+    Object.keys(tags).forEach(function(id){
+      if(names.indexOf(tags[id]) >= 0 && !state.userUnticked[id]){
+        state.selectedTags[id] = true;
+      }
+    });
+    // Set preselection: a confident fingerprint match wins, otherwise fall
+    // back to the static verdict. Anything below SUSPICIOUS is left alone
+    // rather than guessed at.
+    var guess = S.fuzzy && S.fuzzy.guess;
+    if(guess && guess.from_bomb){
+      state.classification = guess.classification_id || 3;
+    } else if(guess && guess.classification_id && guess.confidence >= 0.5){
+      state.classification = guess.classification_id;
+    } else {
+      var ts = null;
+      try{ ts = threatScore(); }catch(e){}
+      if(ts && typeof ts.score === "number"){
+        if(ts.score >= 70) state.classification = 3;
+        else if(ts.score >= 35 || ts.insecureDownload) state.classification = 2;
+      }
+    }
+  }
+
+  function setClass(name){
+    state.classification = ({goodware:1, badware:2, malware:3})[name] || 0;
+  }
+  function toggleTag(id, on){
+    // Record the intent, not just the state: a later auto-fill pass must not
+    // silently re-tick something the analyst deliberately cleared.
+    if(on){ state.selectedTags[id] = true; state.userTicked[id] = true; delete state.userUnticked[id]; }
+    else { delete state.selectedTags[id]; state.userUnticked[id] = true; delete state.userTicked[id]; }
+    try{ if(window.rho9PersistSession) window.rho9PersistSession(); }catch(e){}
+  }
+  // The analyst's in-progress classification is real work: ticked flags, the
+  // chosen set, a generated hash file they have not filed yet. Losing it to a
+  // refresh means doing it twice.
+  function exportFormState(){
+    return {
+      selectedTags: state.selectedTags,
+      classification: state.classification,
+      autoFilledFor: state.autoFilledFor,
+      lastArtifact: state.lastArtifact
+    };
+  }
+  function importFormState(d){
+    if(!d) return;
+    state.selectedTags = d.selectedTags || {};
+    if(d.classification) state.classification = d.classification;
+    // Keep the marker so a restore does not immediately re-run autoFill and
+    // wipe the corrections that were made before the refresh.
+    if(d.autoFilledFor) state.autoFilledFor = d.autoFilledFor;
+    if(d.lastArtifact) state.lastArtifact = d.lastArtifact;
+  }
+
+  function clearTags(){
+    Object.keys(state.selectedTags).forEach(function(id){ state.userUnticked[id] = true; });
+    state.selectedTags = {}; state.userTicked = {};
+    render();
+  }
+  function applyDetected(){
+    // Explicit re-apply clears the "I unticked this" memory: the analyst is
+    // asking for the scan's opinion again.
+    state.userUnticked = {};
+    var names = detectedFamilies(), tags = (state.flags||{}).tags || {};
+    Object.keys(tags).forEach(function(id){
+      if(names.indexOf(tags[id]) >= 0) state.selectedTags[id] = true;
+    });
+    render();
+  }
+  function selectedTagNames(){
+    var tags = (state.flags||{}).tags || {};
+    return Object.keys(state.selectedTags).map(function(id){ return tags[id]; })
+                 .filter(Boolean);
+  }
+
+  function buildReportObject(){
+    // A compact, non-HTML report. Deliberately structural: two samples with
+    // similar reports produce similar fuzzy hashes, which is what makes the
+    // report hash useful for clustering.
+    var score = null;
+    try{ score = threatScore(); }catch(e){}
+    return {
+      filename: S.archiveName || null,
+      score: score ? score.score : null,
+      hard: score ? !!score.hard : null,
+      insecure_download: score ? !!score.insecureDownload : null,
+      families: score ? (score.families || []) : [],
+      reasons: score ? (score.reasons || []) : [],
+      iocs: (S.iocs||[]).map(function(i){ return {type:i.type, value:i.value}; }),
+      files: Object.keys(S.files||{}).length,
+      flagged: Object.keys(S.files||{}).filter(function(k){ return S.files[k].flagged; }).length
+    };
+  }
+
+  async function generate(fileIt){
+    function say(html){ var el=document.getElementById("fuzzyFileResult"); if(el) el.innerHTML=html; }
+    var rdy = readiness();
+    if(!rdy.ready){ say('<div class="err-box">'+rdy.msg+'</div>'); return; }
+    var includeReport = (document.getElementById("fuzzyIncludeReport")||{}).checked;
+    var ref;
+    try{
+      ref = await sampleRef(function(n){
+        say('<div class="intel-note">&#8987; Uploading '+(n/1048576).toFixed(1)+
+            ' MB to the bridge...</div>');
+      });
+    }catch(e){
+      say('<div class="err-box">'+esc(e.message)+'</div>');
+      return;
+    }
+    say('<div class="intel-note">&#8987; Generating hash file...</div>');
+    // A job id from a restored session points at a bridge that may since have
+    // restarted and wiped its jobs. Detect that and fall back to the bytes if
+    // we still have them, rather than reporting that nothing was uploaded.
+    function staleJob(msg){
+      return /no sample supplied|unknown job|not found/i.test(msg||"");
+    }
+    var payload = {
+      filename: S.archiveName || "sample.jar",
+      classification: state.classification,
+      tags: selectedTagNames(),
+      family: (document.getElementById("fuzzyFamily")||{}).value || "",
+      note: (document.getElementById("fuzzyNote")||{}).value || ""
+    };
+    if(S.lastJobId) payload.job_id = S.lastJobId;
+    for(var k in ref) payload[k] = ref[k];
+    if(S.archivePassword) payload.password = S.archivePassword;
+    if(includeReport) payload.report = buildReportObject();
+    if(fileIt) payload.file_as = ({1:"goodware",2:"badware",3:"malware"})[state.classification];
+    try{
+      var r;
+      try{
+        r = await call("/rho9/fuzzy/hash", JSON.stringify(payload), {"Content-Type":"application/json"});
+      }catch(err){
+        if(staleJob(err.message) && payload.job_id){
+          S.lastJobId = null;
+          if(!S.lastSampleBytes){
+            say('<div class="err-box">The bridge no longer holds this sample (it has been '+
+                'restarted since the session was saved). Load '+esc(S.archiveName||"the file")+
+                ' again to generate a hash file.</div>');
+            return;
+          }
+          say('<div class="intel-note">&#8987; Bridge no longer had the sample, re-uploading...</div>');
+          var again = await sampleRef();
+          delete payload.job_id;
+          for(var rk in again) payload[rk] = again[rk];
+          r = await call("/rho9/fuzzy/hash", JSON.stringify(payload), {"Content-Type":"application/json"});
+        } else { throw err; }
+      }
+      state.lastArtifact = r.artifact;
+      try{ if(window.rho9PersistSession) window.rho9PersistSession(); }catch(e){}
+      await refreshStatus();
+      render();
+      var msg = '<div>Hash file generated. Code <span class="mono">'+esc(r.artifact.code)+
+                '</span> ('+esc(r.artifact.flags.classification)+
+                (r.artifact.flags.tags.length ? ", "+esc(r.artifact.flags.tags.join(", ")) : "")+').</div>';
+      if(r.filed) msg += '<div>Filed under <b>'+esc(r.filed.set)+'</b>.</div>';
+      if(r.file_error) msg += '<div class="err-box">'+esc(r.file_error)+'</div>';
+      var el2 = document.getElementById("fuzzyFileResult");
+      if(el2) el2.innerHTML = msg;
+    }catch(e){
+      var el3 = document.getElementById("fuzzyFileResult");
+      if(el3) el3.innerHTML = '<div class="err-box">'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function testFile(){
+    var out = document.getElementById("fuzzyFileResult");
+    var rdy = readiness();
+    if(!rdy.ready){ if(out) out.innerHTML = '<div class="err-box">'+rdy.msg+'</div>'; return; }
+    var setName = ({1:"goodware",2:"badware",3:"malware"})[state.classification] || "malware";
+    try{
+      var tref = await sampleRef();
+      var testPayload = {
+        filename: S.archiveName || "sample.jar",
+        set: setName, classification: state.classification,
+        tags: selectedTagNames()
+      };
+      for(var tk in tref) testPayload[tk] = tref[tk];
+      if(S.archivePassword) testPayload.password = S.archivePassword;
+      var r = await call("/rho9/fuzzy/test", JSON.stringify(testPayload),
+                         {"Content-Type":"application/json"});
+      var h = '';
+      if(r.duplicate_conflict){
+        h += '<div class="err-box">This exact sample is already filed under <b>'+
+             esc(r.duplicate_conflict.already_in)+'</b>. Filing it as '+esc(setName)+
+             ' would contradict that.</div>';
+      }
+      if((r.goodware_collisions||[]).length){
+        h += '<div class="err-box">Collides with known-good samples: '+
+             esc(r.goodware_collisions.map(function(c){ return c.filename; }).join(", "))+
+             '. Filing this would generate false positives.</div>';
+      }
+      if(r.safe_to_file) h += '<div style="color:var(--green)">Safe to file.</div>';
+      if((r.corroborating||[]).length){
+        h += '<div class="intel-note">Corroborated by '+num(r.corroborating.length)+
+             ' sample(s) already in '+esc(setName)+': '+
+             esc(r.corroborating.map(function(c){ return c.filename; }).join(", "))+'</div>';
+      }
+      if(out) out.innerHTML = h || '<div class="intel-note">Nothing similar filed yet.</div>';
+    }catch(e){
+      if(out) out.innerHTML = '<div class="err-box">'+esc(e.message)+'</div>';
+    }
+  }
+
+  // Reference the sample instead of embedding it. Base64 inside a JSON body
+  // costs a third on top of the file size and then has to be parsed as one
+  // giant string, so a 25 MB jar arrived as a 34 MB request and was rejected.
+  // If the bridge already decompiled this file it is holding the bytes, so
+  // nothing needs sending at all; otherwise stage them once as raw bytes.
+  // Every build of this panel has called itself v3.5.x, which made a
+  // UI/bridge mismatch impossible to spot: an old bridge produced a cryptic
+  // cap error and looked like a bug in the current build. The versions are
+  // now shown side by side, and a bridge missing an endpoint this UI needs
+  // says so in words.
+  function bridgeVersion(){
+    var c = caps();
+    return c.version || c.server_version || "unknown";
+  }
+  function bridgeTooOld(){
+    // /rho9/fuzzy/stage arrived in bridge v1.2.0; without it this UI has no
+    // way to hand over a sample larger than the JSON body cap.
+    var v = String(bridgeVersion()).split(".").map(Number);
+    if(!v.length || isNaN(v[0])) return false;
+    return (v[0] < 1) || (v[0] === 1 && (v[1]||0) < 2);
+  }
+
+  async function sampleRef(onProgress){
+    var bytes = S.lastSampleBytes;
+    if(state.stagedFor === S.archiveName && state.stageId){
+      return { stage_id: state.stageId };
+    }
+    // The bridge already holds this sample if it decompiled it, so nothing
+    // needs sending. On a restored session the bytes are gone but the job id
+    // may still resolve; if the bridge has restarted, the caller reports that
+    // rather than failing blankly.
+    if(S.lastJobId) return { job_id: S.lastJobId };
+    if(!bytes){
+      throw new Error("This analysis was restored from a saved session, which does not "+
+                      "carry the original file. Load it again to generate a hash file.");
+    }
+    if(onProgress) onProgress(bytes.byteLength);
+    var r;
+    try{
+      r = await call("/rho9/fuzzy/stage", bytes, {
+        "Content-Type":"application/octet-stream",
+        "X-Filename": encodeURIComponent(S.archiveName || "sample.jar")
+      });
+    }catch(e){
+      if(/not found|404/i.test(e.message||"")){
+        throw new Error("This bridge (v"+bridgeVersion()+") is older than this page "+
+                        "and cannot accept samples this way. Update the bridge to "+
+                        "v1.2.0 or later.");
+      }
+      throw e;
+    }
+    state.stageId = r.stage_id;
+    state.stagedFor = S.archiveName;
+    return { stage_id: r.stage_id };
+  }
+
+  function downloadArtifact(){
+    if(!state.lastArtifact) return;
+    var name = (state.lastArtifact.sha256||"sample").slice(0,16)+".rho9.json";
+    var blob = new Blob([JSON.stringify(state.lastArtifact, null, 1)], {type:"application/json"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function copyArtifact(){
+    var box = document.getElementById("fuzzyArtifactBox");
+    if(!box) return;
+    box.select();
+    try{ document.execCommand("copy"); setStatus("Hash file copied"); }catch(e){}
+  }
+
+  async function importFile(input){
+    var f = input.files && input.files[0];
+    if(!f) return;
+    function say(html){
+      var el = document.getElementById("fuzzyImportResult");
+      if(el) el.innerHTML = html;
+    }
+    say('<div class="intel-note">Importing ' + esc(f.name) + '...</div>');
+    try{
+      var r, msg;
+      if(/\.zip$/i.test(f.name)){
+        r = await call("/rho9/fuzzy/upload", await f.arrayBuffer(),
+                       {"Content-Type":"application/octet-stream"});
+        msg = '<div>Imported <b>'+num(r.accepted.length)+'</b> signature(s)';
+        if((r.rejected||[]).length){
+          msg += ', rejected '+num(r.rejected.length)+':<ul>';
+          r.rejected.slice(0,8).forEach(function(x){
+            msg += '<li class="intel-note">'+esc(x.file)+': '+esc(x.error)+'</li>';
+          });
+          msg += '</ul>';
+        }
+        msg += '</div>';
+      } else {
+        var doc = JSON.parse(await f.text());
+        r = await call("/rho9/fuzzy/import", JSON.stringify({artifact:doc}),
+                       {"Content-Type":"application/json"});
+        msg = '<div>Filed under <b>'+esc(r.set)+'</b> as <span class="mono">'+
+              esc((r.sha256||"").slice(0,16))+'</span>.</div>';
+      }
+      await refreshStatus();
+      render();
+      say(msg);
+    }catch(e){
+      say('<div class="err-box">Import rejected: '+esc(e.message)+'</div>');
+    }
+    input.value = "";
+  }
+
+  function exportAll(){
+    var url = bridgeUrl();
+    if(url) window.open(url+"/rho9/fuzzy/export", "_blank");
+  }
+  function exportSet(name){
+    var url = bridgeUrl();
+    if(url) window.open(url+"/rho9/fuzzy/export?set="+encodeURIComponent(name), "_blank");
+  }
+
+  async function onShow(){
+    // Paint immediately from whatever is known, then fill in the bridge
+    // status. Awaiting the network first left the tab blank on open.
+    try{ autoFill(); }catch(e){}
+    render();
+    if(!state.status || !state.flags){
+      await refreshStatus();
+      render();
+    } else if(state.dirty){
+      render();
+    }
+  }
+
+  return {
+    scanSample:scanSample, refreshStatus:refreshStatus, render:render, onShow:onShow,
+    scoreContribution:scoreContribution, supported:supported,
+    setClass:setClass, toggleTag:toggleTag, applyDetected:applyDetected,
+    clearTags:clearTags, exportFormState:exportFormState, importFormState:importFormState,
+    generate:generate, testFile:testFile, downloadArtifact:downloadArtifact,
+    copyArtifact:copyArtifact, importFile:importFile, exportAll:exportAll,
+    exportSet:exportSet,
+    _state:state
+  };
+})();
+
 </script>
 </body>
 </html>
